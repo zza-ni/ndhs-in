@@ -193,23 +193,6 @@ document.addEventListener("DOMContentLoaded", () => {
     tabs[getDayIdx(queryDateStr)].checked = true;
     getJsonData(null, tabs, menuWrapper, todayDateElem, nextBtn);
 
-    prevBtn.addEventListener("click", () => {
-        let a = strToDate(getQueryDate());
-        updateQueryParam(DateToStr(new Date(a.setDate(a.getDate() - 7))));
-    });
-
-    nextBtn.addEventListener("click", () => {
-        let a = strToDate(getQueryDate());
-        updateQueryParam(DateToStr(new Date(a.setDate(a.getDate() + 7))));
-    });
-
-    const hour = now.getHours(), minute = now.getMinutes(), time = hour * 60 + minute;
-    const nextDay = new Date(now); nextDay.setDate(now.getDate() + 1);
-    let paramdate = new URLSearchParams(window.location.search)
-    if (time >= 1170 && !paramdate.get('date')) {
-        updateQueryParam(DateToStr(nextDay));
-    }
-
     let deferredPrompt;
     const snackbar = document.getElementById('pwa-snackbar');
     const installBtn = document.getElementById('snackbar-install-btn');
@@ -241,4 +224,21 @@ document.addEventListener("DOMContentLoaded", () => {
         snackbar.style.display = 'none';
         deferredPrompt = null;
     });
+
+    prevBtn.addEventListener("click", () => {
+        let a = strToDate(getQueryDate());
+        updateQueryParam(DateToStr(new Date(a.setDate(a.getDate() - 7))));
+    });
+
+    nextBtn.addEventListener("click", () => {
+        let a = strToDate(getQueryDate());
+        updateQueryParam(DateToStr(new Date(a.setDate(a.getDate() + 7))));
+    });
+
+    const hour = now.getHours(), minute = now.getMinutes(), time = hour * 60 + minute;
+    const nextDay = new Date(now); nextDay.setDate(now.getDate() + 1);
+    let paramdate = new URLSearchParams(window.location.search)
+    if (time >= 1170 && !paramdate.get('date')) {
+        updateQueryParam(DateToStr(nextDay));
+    }
 });
