@@ -19,7 +19,8 @@ function isSafari() {
     && !/FBAV|Line/i.test(ua); // 페이스북, 라인 등 다른 인앱 브라우저 제외
 }
 function isInStandaloneMode() {
-    return ('standalone' in window.navigator) && window.navigator.standalone;
+  return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) 
+      || (window.navigator.standalone === true);
 }
 function isFirstStandaloneLaunch() {
   const launchedBefore = localStorage.getItem('pwaFirstLaunchDone');
