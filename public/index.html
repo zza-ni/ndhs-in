@@ -210,7 +210,7 @@
                             }
 
                             // 서버에 토큰 저장
-                            fetch("/.netlify/functions/saveToken", {
+                            fetch("./api/saveToken", {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
                                 body: JSON.stringify({ token: currentToken }),
