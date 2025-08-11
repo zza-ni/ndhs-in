@@ -57,41 +57,6 @@ function getActiveMeal() {
     if (time < 780) return { meal: "lunch", dayIndex: getTodayIndex(), date: DateToStr(now) };
     return { meal: "dinner", dayIndex: getTodayIndex(), date: DateToStr(now) };
 }
-async function subscribeUser() {
-    const registration = await navigator.serviceWorker.ready;
-
-    const permission = await Notification.requestPermission();
-    if (permission !== 'granted') {
-        alert('알림을 차단하였습니다. 알림을 받으시려면 앱 설정에서 알림을 허용해주세요.');
-        return;
-    }
-
-    const vapidPublicKey = 'BCnsNKzhkJVouCCvFADUHBuzW6PUZTNDiuJOEfpGY-Psgn9dGX9rJBTUmyfoUbNyhHmesHJoXKehoLfZPG-LrZI';
-
-    const urlBase64ToUint8Array = (base64String) => {
-        const padding = '='.repeat((4 - base64String.length % 4) % 4);
-        const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
-        const rawData = window.atob(base64);
-        const outputArray = new Uint8Array(rawData.length);
-        for (let i = 0; i < rawData.length; ++i) {
-            outputArray[i] = rawData.charCodeAt(i);
-        }
-        return outputArray;
-    };
-
-    const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
-    });
-
-    await fetch('/.netlify/functions/save-subscription', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(subscription)
-    });
-
-    console.log('User subscribed for push notifications.');
-}
 
 let tmpMealData = null;
 const nowWeekDate = getWednesdayOfWeek(DateToStr(now));
@@ -224,7 +189,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 설치 버튼 클릭 시 분기
     installBtn.addEventListener('click', async () => {
-        subscribeUser();
         if (isiOS()) {
             iosModal.style.display = 'flex';
         } else {

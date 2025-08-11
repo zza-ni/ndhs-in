@@ -1,4 +1,4 @@
-const { db } = require("./firebaseAdmin");
+const { admin, db } = require("./firebaseAdmin");
 
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") {
