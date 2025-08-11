@@ -1,4 +1,4 @@
-const CACHE_NAME = 'v1';
+const CACHE_NAME = 'pwa-cache-v1';
 const CACHE_URLS = [
   '/',
   '/index.html',
@@ -8,8 +8,8 @@ const CACHE_URLS = [
   '/src/icon-512x512.png',
 ];
 
-// 설치 단계에서 중요한 리소스 캐시
-self.addEventListener('install', event => {
+// 서비스 워커 설치 시 핵심 리소스 캐시
+self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(CACHE_URLS))
@@ -17,39 +17,42 @@ self.addEventListener('install', event => {
   );
 });
 
-// 활성화 단계에서 이전 캐시 제거
-self.addEventListener('activate', event => {
+// 활성화 시 이전 캐시 제거
+self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys()
-      .then(cacheNames => Promise.all(
+    caches.keys().then((cacheNames) =>
+      Promise.all(
         cacheNames.map(name => {
           if (name !== CACHE_NAME) {
             return caches.delete(name);
           }
         })
-      ))
-      .then(() => self.clients.claim())
+      )
+    ).then(() => self.clients.claim())
   );
 });
 
-// 요청 시 캐시 우선 처리 후 네트워크 fallback
-self.addEventListener('fetch', event => {
+// 네트워크 우선 전략 적용(fetch 이벤트)
+// index.html은 네트워크 우선 처리, 그 외는 캐시 우선 처리
+self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
-  event.respondWith(
-    caches.match(event.request).then(cachedResponse => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request).then(networkResponse => {
-        // 성공 응답만 캐시에 저장 (옵션)
-        if(networkResponse && networkResponse.status === 200) {
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, networkResponse.clone()));
-        }
-        return networkResponse;
-      }).catch(() => {
-        // 오프라인 fallback 처리 필요시 여기에 작성
-      });
-    })
-  );
+  if (event.request.mode === 'navigate') {
+    // 네트워크 우선: 항상 최신 index.html 요청
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          // 성공 시 캐시에 저장
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
+  } else {
+    // 캐시 우선: 다른 리소스는 미리 캐시된 자원 사용, 없으면 네트워크 요청
+    event.respondWith(
+      caches.match(event.request).then((cached) => cached || fetch(event.request))
+    );
+  }
 });
