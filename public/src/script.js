@@ -22,15 +22,6 @@ function isInStandaloneMode() {
   return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) 
       || (window.navigator.standalone === true);
 }
-function isFirstStandaloneLaunch() {
-  const launchedBefore = localStorage.getItem('pwaFirstLaunchDone');
-
-  if (isInStandaloneMode() && !launchedBefore) {
-    localStorage.setItem('pwaFirstLaunchDone', 'true');
-    return true;
-  }
-  return false;
-}
 function strToDate(yyyymmdd) {
     return new Date(yyyymmdd.slice(0, 4), yyyymmdd.slice(4, 6) - 1, yyyymmdd.slice(6, 8));
 }
@@ -178,10 +169,6 @@ let lastDateParam = getQueryDate();
 })();
 
 document.addEventListener("DOMContentLoaded", () => {
-    if (isFirstStandaloneLaunch()) {
-      document.getElementById('modal-get-push').style.display = 'block';
-    }
-
     const tabs = document.querySelectorAll('.segmented-control input[name="tab"]');
     const menuWrapper = document.querySelector('.menu-wrapper');
     const todayDateElem = document.querySelector('.today-date');
