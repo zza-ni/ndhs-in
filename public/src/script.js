@@ -7,8 +7,28 @@ function DateToStr(date = new Date()) {
 function isiOS() {
     return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
 }
+function isKakaoInAppBrowser() {
+  return /KAKAOTALK/i.test(window.navigator.userAgent);
+}
+function isSafari() {
+  const ua = window.navigator.userAgent;
+  return isiOS()
+    && /Safari/i.test(ua)
+    && !/CriOS/i.test(ua)  // iOS용 Chrome 제외
+    && !isKakaoInAppBrowser()
+    && !/FBAV|Line/i.test(ua); // 페이스북, 라인 등 다른 인앱 브라우저 제외
+}
 function isInStandaloneMode() {
     return ('standalone' in window.navigator) && window.navigator.standalone;
+}
+function isFirstStandaloneLaunch() {
+  const launchedBefore = localStorage.getItem('pwaFirstLaunchDone');
+
+  if (isInStandaloneMode() && !launchedBefore) {
+    localStorage.setItem('pwaFirstLaunchDone', 'true');
+    return true;
+  }
+  return false;
 }
 function strToDate(yyyymmdd) {
     return new Date(yyyymmdd.slice(0, 4), yyyymmdd.slice(4, 6) - 1, yyyymmdd.slice(6, 8));
@@ -157,6 +177,10 @@ let lastDateParam = getQueryDate();
 })();
 
 document.addEventListener("DOMContentLoaded", () => {
+    if (isFirstStandaloneLaunch()) {
+      document.getElementById('modal-get-push').style.display = 'block';
+    }
+
     const tabs = document.querySelectorAll('.segmented-control input[name="tab"]');
     const menuWrapper = document.querySelector('.menu-wrapper');
     const todayDateElem = document.querySelector('.today-date');
@@ -179,18 +203,27 @@ document.addEventListener("DOMContentLoaded", () => {
         updateQueryParam(DateToStr(new Date(a.setDate(a.getDate() + 7))));
     });
 
+    const hour = now.getHours(), minute = now.getMinutes(), time = hour * 60 + minute;
+    const nextDay = new Date(now); nextDay.setDate(now.getDate() + 1);
+    let paramdate = new URLSearchParams(window.location.search)
+    if (time >= 1170 && !paramdate.get('date')) {
+        updateQueryParam(DateToStr(nextDay));
+    }
+
     let deferredPrompt;
     const snackbar = document.getElementById('pwa-snackbar');
     const installBtn = document.getElementById('snackbar-install-btn');
-    const iosModal = document.getElementById('ios-install-modal');
-    const iosModalClose = document.getElementById('ios-modal-close');
+    const iosModal = document.getElementById('modal-ios-install');
 
     if (!isInStandaloneMode()) snackbar.style.display = 'block';
 
-    // 설치 버튼 클릭 시 분기
+
     installBtn.addEventListener('click', async () => {
         if (isiOS()) {
             iosModal.style.display = 'flex';
+            if (!isSafari()) {
+                iosModal.getElementsByClassName('modal-guide')[0].innerHTML = `<p>1.&nbsp;&nbsp;<img src="./src/ios-share.png" alt="공유 버튼" width="15" style="vertical-align:middle"> &nbsp; 버튼을 누르고 <b style="color:blue">Safari로 열기</b></p><p>2.&nbsp;&nbsp;<img src="./src/ios-share.png" alt="공유 버튼" width="15" style="vertical-align:middle"> &nbsp; 버튼을 누르고 <b style="color:blue">홈 화면에 추가하기</b></p>`
+            }
         } else {
             if (!deferredPrompt) return;
             deferredPrompt.prompt();
@@ -199,10 +232,6 @@ document.addEventListener("DOMContentLoaded", () => {
             deferredPrompt = null;
         }
     });
-
-    iosModalClose.onclick = () => {
-        iosModal.style.display = 'none';
-    };
 
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();

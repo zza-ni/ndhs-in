@@ -157,34 +157,33 @@ body {
     box-shadow: 0 1px 5px var(--shadow);
     font-weight: 700;
 }
-
-#ios-install-modal {
+.modal {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
+  inset: 0; /* top, right, bottom, left 전부 0 */
   background: rgba(0,0,0,0.22);
   z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
-.ios-modal-content {
+.modal-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   background: #fff;
   border-radius: 16px;
   padding: 32px 24px 18px 24px;
   box-shadow: 0 2px 18px rgba(0,0,0,0.18);
   text-align: center;
-  min-width: 270px;
+  min-width: 300px;
   max-width: 86vw;
 }
 
-.ios-modal-content h2 {
+.modal-content h2 {
   margin: 8px 0 6px 0;
-  color: #d31a3f;
   font-size: 1.35em;
 }
 
-.ios-guide {
+.modal-guide {
   margin: 16px 0 12px 0;
   background: #f7f5fa;
   padding: 12px 10px;
@@ -193,7 +192,7 @@ body {
   color: #6b437e;
 }
 
-#ios-modal-close {
+.modal-close {
   margin-top: 10px;
   border: none;
   background: #eae3ff;

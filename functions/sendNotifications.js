@@ -50,7 +50,7 @@ exports.handler = async (event) => {
       tokens: tokens,
     };
 
-    const response = await admin.messaging().sendMulticast(message);
+    const response = await admin.messaging().sendEachForMulticast(message);
 
     // 실패한 토큰 수집 및 삭제
     const invalidTokens = [];
