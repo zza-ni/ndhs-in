@@ -217,7 +217,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!isInStandaloneMode()) snackbar.style.display = 'block';
 
-
     installBtn.addEventListener('click', async () => {
         if (isiOS()) {
             iosModal.style.display = 'flex';
