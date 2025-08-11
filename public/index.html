@@ -85,6 +85,8 @@
         </div>
     </div>
 
+    <button id="enable-notifications">푸시 알림 권한 요청</button>
+
 
 
     <script>
@@ -97,51 +99,64 @@
                     console.error('Service Worker registration failed:', err);
                 });
         }
+    </script>
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-analytics.js";
+        import { getMessaging } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-messaging.js";
+        // TODO: Add SDKs for Firebase products that you want to use
+        // https://firebase.google.com/docs/web/setup#available-libraries
 
-        // 푸시 구독 및 서버에 subscription 정보 전송 함수
-        async function subscribeUser() {
-            const registration = await navigator.serviceWorker.ready;
+        // Your web app's Firebase configuration
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+            apiKey: "AIzaSyCeqeuQkTb3wioxIogkn7hcUQz9FP2K1XA",
+            authDomain: "ndhs-bob.firebaseapp.com",
+            projectId: "ndhs-bob",
+            storageBucket: "ndhs-bob.firebasestorage.app",
+            messagingSenderId: "109335510565",
+            appId: "1:109335510565:web:8777eb5e791089da23c9cc",
+            measurementId: "G-32BMZXN9CQ"
+        };
 
-            // 알림 권한 요청
-            const permission = await Notification.requestPermission();
-            if (permission !== 'granted') {
-                console.log('Notification permission not granted.');
-                return;
-            }
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const messaging = getMessaging(app);
 
-            const vapidPublicKey = 'BCnsNKzhkJVouCCvFADUHBuzW6PUZTNDiuJOEfpGY-Psgn9dGX9rJBTUmyfoUbNyhHmesHJoXKehoLfZPG-LrZI';
-
-            // Base64 -> Uint8Array 변환 함수
-            const urlBase64ToUint8Array = (base64String) => {
-                const padding = '='.repeat((4 - base64String.length % 4) % 4);
-                const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
-                const rawData = window.atob(base64);
-                const outputArray = new Uint8Array(rawData.length);
-                for (let i = 0; i < rawData.length; ++i) {
-                    outputArray[i] = rawData.charCodeAt(i);
+        document.getElementById("enable-notifications").addEventListener("click", () => {
+            Notification.requestPermission().then((permission) => {
+                if (permission === "granted") {
+                    getToken(messaging, { vapidKey: "BCnsNKzhkJVouCCvFADUHBuzW6PUZTNDiuJOEfpGY-Psgn9dGX9rJBTUmyfoUbNyhHmesHJoXKehoLfZPG-LrZI" })
+                        .then((currentToken) => {
+                            if (currentToken) {
+                                console.log("FCM 토큰:", currentToken);
+                                // 서버에 토큰 저장 요청 보내기
+                                fetch("/.netlify/functions/saveToken", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ token: currentToken }),
+                                })
+                                    .then(res => res.json())
+                                    .then(data => {
+                                        alert(data.message);
+                                    })
+                                    .catch(err => {
+                                        console.error("토큰 저장 요청 실패:", err);
+                                    });
+                            } else {
+                                console.log("토큰을 받을 수 없습니다.");
+                            }
+                        })
+                        .catch((err) => {
+                            console.error("토큰 요청 중 오류:", err);
+                        });
+                } else {
+                    console.log("푸시 알림 권한이 거부되었습니다.");
                 }
-                return outputArray;
-            };
-
-            // 푸시 매니저 구독
-            const subscription = await registration.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
             });
-
-            // 구독정보를 JSON으로 변환 후 서버로 전송
-            await fetch('/.netlify/functions/save-subscription', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(subscription)
-            });
-
-            console.log('User subscribed for push notifications.');
-        }
-
-        // 적절한 시점에 구독 함수 호출 (예: 페이지 로드 후)
-        subscribeUser();
-
+        });
     </script>
 </body>
 
