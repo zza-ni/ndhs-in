@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" data-theme="dark">
 
 <head>
     <meta charset="UTF-8">
@@ -153,12 +153,12 @@
 </head>
 
 <body>
-    <div
-        style="margin: 0 auto; text-align: center; display: flex; align-items: center; justify-content: center; gap: 12px;">
-        <button id="prev-week" class="week-control">&#60;</button>
-        <div>
-            <p class="today-date" style="font-size: 1.2em; font-weight: 500; color: #333; margin: 0;"></p>
+    <div class="header">
+        <div onclick="location.reload()">
+            <img src="./src/logo.png" alt="남도밥 로고" width="48" height="48">
         </div>
+        <button id="prev-week" class="week-control">&#60;</button>
+        <p class="today-date"></p>
         <button id="next-week" class="week-control">&#62;</button>
     </div>
 
@@ -187,6 +187,34 @@
 
     <div class="menu-wrapper">
     </div>
+
+    <!-- 테마 전환 버튼 -->
+    <button id="theme-toggle-btn" aria-label="Toggle theme" title="테마 전환"">☀️</button>
+
+    <script>
+        const themeBtn = document.getElementById('theme-toggle-btn');
+        const root = document.documentElement;
+
+        function updateButtonIcon(theme) {
+            if (theme === 'dark') {
+                themeBtn.textContent = '🌙';
+                themeBtn.style.backgroundColor = 'var(--focus-color)';
+            } else {
+                themeBtn.textContent = '☀️';
+                themeBtn.style.backgroundColor = 'var(--focus-color)';
+            }
+        }
+
+        let currentTheme = root.getAttribute('data-theme') || 'light';
+        updateButtonIcon(currentTheme);
+
+        themeBtn.addEventListener('click', () => {
+            currentTheme = (currentTheme === 'light') ? 'dark' : 'light';
+            root.setAttribute('data-theme', currentTheme);
+            updateButtonIcon(currentTheme);
+        });
+    </script>
+
 
     <div id="pwa-snackbar" style="display:none;">
         <div class="snackbar-content">
