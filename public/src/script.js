@@ -120,7 +120,8 @@ function getJsonData(fName, tabs, menuWrapper, todayDateElem, nextBtn) {
         })
         .then(data => {
             tmpMealData = data;
-            const maxDate = DateToStr(getWednesdayOfWeek(DateToStr(new Date(nowWeekDate.getTime() + 4 * 24 * 60 * 60 * 1000))));
+            // 목요일 18:01 부터 다음 주로 넘어가는 로직
+            const maxDate = DateToStr(getWednesdayOfWeek(DateToStr(new Date(now.getTime() + 4 * 24 * 3600000 + 21540000))));
             setNextBtnDisabled(nextBtn, DateToStr(fName) === maxDate);
             let idx = getCheckedTabIndex(tabs);
             if (idx < 0) idx = 0;
@@ -130,11 +131,8 @@ function getJsonData(fName, tabs, menuWrapper, todayDateElem, nextBtn) {
             });
         })
         .catch(() => {
-            menuWrapper.innerHTML = "";
-            if (todayDateElem) todayDateElem.textContent = "식단 데이터를 불러올 수 없습니다.";
-            tabs.forEach(tab => tab.checked = false);
-            tabs.forEach(tab => tab.onclick = null);
-            setNextBtnDisabled(nextBtn, false);
+            alert("식단 정보를 불러오는 데 실패했습니다. 잠시 후 다시 시도해주세요.");
+            location.href = '/';
         });
 }
 

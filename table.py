@@ -17,7 +17,7 @@ def get_wednesday_of_week(date=None):
     # date.weekday(): 월=0, 화=1, ..., 일=6
     # 수요일은 2이므로, 오늘이 무슨 요일인지에 따라 수요일까지 차이 계산
     diff_to_wednesday = 2 - date.weekday()
-    wednesday = date + timedelta(days=diff_to_wednesday)
+    wednesday = date + timedelta(days=diff_to_wednesday + 7)  # 다음 주 수요일로 설정
     return wednesday.strftime("%Y-%m-%d")
 
 
@@ -53,8 +53,8 @@ def get_bob(date="2025-08-06"):
 def commit_to_github(file_path):
     token = os.getenv("github_token")
     repo_name = "JeongSJ/ndhs-bob"
-    branch = "main"
-    msg = "Update " + file_path.split("/")[-1]
+    branch = "dev"
+    msg = "[Auto] Update " + file_path.split("/")[-1]
 
     g = Github(token)
     repo = g.get_repo(repo_name)
@@ -68,11 +68,12 @@ def commit_to_github(file_path):
     except:
         repo.create_file(file_path, msg, content, branch=branch)
 
-    print("Uploaded to GitHub successfully.")
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"{now} Uploaded to GitHub successfully.")
 
 
 date = get_wednesday_of_week()
-fName = f"./data/{date.replace('-', '')}.json"
+fName = f"./public/data/{date.replace('-', '')}.json"
 
 # 파일 이미 있으면
 if os.path.isfile(fName):
