@@ -1,5 +1,5 @@
 .env
-# Local Netlify folder
-.netlify
+*.pem
 /node_modules
 /public/data
+session_cookies.json
