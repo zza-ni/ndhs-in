@@ -1,20 +1,26 @@
 {
     "name": "남도인",
     "short_name": "남도인",
-    "start_url": "/index.html",
+    "description": "남도학숙 인트라넷 플랫폼",
+    "lang": "ko",
+    "start_url": "/",
+    "scope": "/",
     "display": "standalone",
-    "background_color": "#054A2D",
-    "theme_color": "#FFFEE6",
+    "orientation": "portrait",
+    "background_color": "#FFFEE6",
+    "theme_color": "#054A2D",
     "icons": [
         {
             "src": "/src/icon-192x192.png",
             "sizes": "192x192",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any maskable"
         },
         {
             "src": "/src/icon-512x512.png",
             "sizes": "512x512",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any maskable"
         }
     ],
     "screenshots": [
@@ -32,6 +38,5 @@
             "form_factor": "wide",
             "label": "남도인"
         }
-    ],
-    "description": "남도학숙 인트라넷 플랫폼"
+    ]
 }
