@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { getNoticeListCache, isNoticeCacheFresh, setNoticeListCache } from '../lib/noticeCache';
 
 export default function NoticePage() {
   const [items, setItems] = useState([]);
@@ -16,8 +17,30 @@ export default function NoticePage() {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const scrollRef = React.useRef(null);
 
-  const NOTICE_API = import.meta.env.VITE_NOTICE_API;
+  const API_ENDPOINT = import.meta.env.VITE_API_ENDPOINT;
+  const NOTICE_API = `${API_ENDPOINT.replace(/\/$/, '')}/boards/notice`;
   const IMAGE_BASE = import.meta.env.VITE_IMAGE_BASE;
+
+  // Swap deferred image attributes to real ones within a given root element
+  const loadImagesInElement = (root) => {
+    if (!root) return;
+    const imgs = root.querySelectorAll('img[data-src], img[data-srcset]');
+    imgs.forEach((img) => {
+      const ds = img.getAttribute('data-src');
+      const dss = img.getAttribute('data-srcset');
+      if (dss) {
+        img.setAttribute('srcset', dss);
+        img.removeAttribute('data-srcset');
+      }
+      if (ds) {
+        img.setAttribute('src', ds);
+        img.removeAttribute('data-src');
+      }
+      // Ensure lazy decoding for smoother paint
+      img.setAttribute('decoding', 'async');
+      if (!img.getAttribute('loading')) img.setAttribute('loading', 'lazy');
+    });
+  };
 
   const formatDate = (yyyymmddHHMMSS) => {
     if (!yyyymmddHHMMSS) return '';
@@ -40,8 +63,20 @@ export default function NoticePage() {
     out = out.replace(/\son\w+='[^']*'/gi, '');
     // Ensure anchor tags open in new tab securely
     out = out.replace(/<a /g, '<a target="_blank" rel="noreferrer noopener" ');
-    // inject lazy loading to images if not present
-    out = out.replace(/<img(\s+)(?![^>]*loading=)([^>]*?)>/gi, '<img loading="lazy" $2>');
+    // Defer image loading: move src/srcset to data-* so they don't load until panel opens
+    out = out.replace(/<img\b[^>]*>/gi, (tag) => {
+      let t = tag;
+      // Move srcset -> data-srcset
+      t = t.replace(/\s+srcset=(['"])(.*?)\1/gi, ' data-srcset="$2"');
+      // Move src -> data-src (doesn't match data-src)
+      t = t.replace(/\ssrc=(['"])(.*?)\1/gi, ' data-src="$2"');
+      // Ensure lazy attribute exists
+      if (!/\sloading=/.test(t)) {
+        // Put loading right after <img
+        t = t.replace(/<img\b/, '<img loading="lazy"');
+      }
+      return t;
+    });
     return out;
   };
 
@@ -79,11 +114,22 @@ export default function NoticePage() {
           setHasMore(false);
           setCursor(null);
         } else {
-          const { posts, newCursor } = await fetchNoticesPageWithCursor(null);
-          if (cancelled) return;
-          setItems(posts);
-          setCursor(newCursor);
-          setHasMore(!!newCursor && posts.length > 0);
+          // Try shared cache first
+          if (isNoticeCacheFresh()) {
+            const c = getNoticeListCache();
+            setItems(c.items || []);
+            setCursor(c.cursor ?? null);
+            setHasMore(!!c.hasMore);
+          } else {
+            const { posts, newCursor } = await fetchNoticesPageWithCursor(null);
+            if (cancelled) return;
+            setItems(posts);
+            setCursor(newCursor);
+            const more = !!newCursor && posts.length > 0;
+            setHasMore(more);
+            // Update cache
+            setNoticeListCache({ items: posts, cursor: newCursor, hasMore: more });
+          }
         }
       } catch (e) {
         if (!cancelled) setError('공지사항을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
@@ -106,6 +152,8 @@ export default function NoticePage() {
     const onTransitionEnd = (e) => {
       if (e.target !== panelEl || e.propertyName !== 'max-height' || scrolled) return;
       scrolled = true;
+  // Hydrate deferred images within the opened panel
+  loadImagesInElement(panelEl);
       // 패널이 완전히 열렸을 때 스크롤 이동
       const cRect = container.getBoundingClientRect();
       const eRect = itemEl.getBoundingClientRect();
@@ -134,6 +182,8 @@ export default function NoticePage() {
     if (getComputedStyle(panelEl).maxHeight === '1200px') {
       setTimeout(() => {
         if (!scrolled) {
+          // Hydrate images even if no transition triggered
+          loadImagesInElement(panelEl);
           const cRect = container.getBoundingClientRect();
           const eRect = itemEl.getBoundingClientRect();
           const offset = eRect.top - cRect.top;
@@ -143,6 +193,19 @@ export default function NoticePage() {
     }
     return () => panelEl.removeEventListener('transitionend', onTransitionEnd);
   }, [openId]);
+
+  // Ensure images in single-post mode are hydrated immediately, and also hydrate when items first load
+  useEffect(() => {
+    if (loading) return;
+    const container = scrollRef.current;
+    if (!container) return;
+    if (postId) {
+      container.querySelectorAll('.accordion-item.open .accordion-panel').forEach((el) => loadImagesInElement(el));
+    } else if (openId) {
+      const el = document.getElementById(`accordion-item-${openId}`)?.querySelector('.accordion-panel');
+      if (el) loadImagesInElement(el);
+    }
+  }, [loading, items, postId, openId]);
 
   const toggle = (id) => setOpenId((cur) => (cur === id ? null : id));
 
@@ -196,13 +259,18 @@ export default function NoticePage() {
       setLoadingMore(true);
       try {
         const { posts: more, newCursor } = await fetchNoticesPageWithCursor(cursor);
-        setItems((prev) => {
-          const map = new Map(prev.map((p) => [p.id || p.post_id, p]));
+        // Build updated list using current state to also update cache deterministically
+  const updated = (() => {
+          const map = new Map((items || []).map((p) => [p.id || p.post_id, p]));
           more.forEach((p) => map.set(p.id || p.post_id, p));
           return Array.from(map.values());
-        });
+        })();
+        setItems(updated);
         setCursor(newCursor);
-        setHasMore(!!newCursor && more.length > 0);
+        const moreFlag = !!newCursor && more.length > 0;
+        setHasMore(moreFlag);
+  // Update cache
+  setNoticeListCache({ items: updated, cursor: newCursor, hasMore: moreFlag });
       } catch {
         // ignore
       } finally {
@@ -212,7 +280,7 @@ export default function NoticePage() {
     }, { root: rootEl || null, rootMargin: '200px 0px' });
     io.observe(el);
     return () => io.disconnect();
-  }, [cursor, hasMore, loading, loadingMore, postId]);
+  }, [cursor, hasMore, loading, loadingMore, postId, items]);
 
   return (
     <main className="main-content page-content">
