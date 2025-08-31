@@ -3,7 +3,6 @@ const CACHE_URLS = [
   '/',
   '/index.html',
   '/src/style.css',
-  '/src/script.js',
   '/src/icon-192x192.png',
   '/src/icon-512x512.png',
 ];

@@ -1,5 +1,7 @@
 .env
+.env.production
 *.pem
 /node_modules
 /public/data
-session_cookies.json
+/example
+/dist

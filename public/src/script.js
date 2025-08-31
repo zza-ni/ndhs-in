@@ -184,7 +184,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const installBtn = document.getElementById('snackbar-install-btn');
     const iosModal = document.getElementById('modal-ios-install');
 
-    if (!isInStandaloneMode()) snackbar.style.display = 'block';
+    // if (!isInStandaloneMode()) snackbar.style.display = 'block';
 
     installBtn.addEventListener('click', async () => {
         if (isiOS()) {
@@ -227,4 +227,141 @@ document.addEventListener("DOMContentLoaded", () => {
     if (time >= 1170 && !paramdate.get('date')) {
         updateQueryParam(DateToStr(nextDay));
     }
+
+    const navItems = document.querySelectorAll('.nav-item');
+    const contentArea = document.querySelector('.main-content');
+
+    // 네비게이션 클릭 이벤트
+    navItems.forEach(item => {
+        item.addEventListener('click', function() {
+            const page = this.getAttribute('data-page');
+
+            // 모든 네비게이션 아이템에서 active 클래스 제거
+            navItems.forEach(nav => nav.classList.remove('active'));
+
+            // 클릭된 아이템에 active 클래스 추가
+            this.classList.add('active');
+
+            // 페이지 전환 (실제 구현 시 라우팅 로직 추가)
+            navigateToPage(page);
+
+            // 햅틱 피드백 (모바일)
+            if ('vibrate' in navigator) {
+                navigator.vibrate(50);
+            }
+        });
+    });
+
+    // 페이지 전환 함수
+    function navigateToPage(page) {
+        // 간단한 페이지 전환 애니메이션
+        contentArea.classList.add('fade-out');
+
+        setTimeout(() => {
+            updatePageContent(page);
+            contentArea.classList.remove('fade-out');
+            contentArea.classList.add('fade-in');
+
+            setTimeout(() => {
+                contentArea.classList.remove('fade-in');
+            }, 300);
+        }, 150);
+    }
+
+    // 페이지 콘텐츠 업데이트
+    function updatePageContent(page) {
+        const pageContent = {
+            'home': `
+                <h1>홈</h1>
+                <p>메인 페이지입니다.</p>
+            `,
+            'menu': `
+                <h1>오늘의 식단표</h1>
+                <div class="meal-card">
+                    <h3>아침</h3>
+                    <p>쌀밥, 소고기장국, 어묵볶음조림, 김구이, 김치</p>
+                </div>
+                <div class="meal-card">
+                    <h3>점심</h3>
+                    <p>흑미밥, 부대찌개, 고등어자반데리야끼구이, 호박나물, 배추겉절이</p>
+                </div>
+                <div class="meal-card">
+                    <h3>저녁</h3>
+                    <p>흰쌀잡곡밥, 야옥국, 보쌈, 배추&상추쌈, 무숙무침, 김치</p>
+                </div>
+            `,
+            'notice': `
+                <h1>공지사항</h1>
+                <div class="notice-list">
+                    <div class="notice-item">
+                        <h3>식당 운영시간 변경 안내</h3>
+                        <p class="notice-date">2025.08.25</p>
+                        <p>추석 연휴 기간 중 식당 운영시간이 변경됩니다.</p>
+                    </div>
+                    <div class="notice-item">
+                        <h3>메뉴 변경 안내</h3>
+                        <p class="notice-date">2025.08.20</p>
+                        <p>다음 주 메뉴가 일부 변경될 예정입니다.</p>
+                    </div>
+                </div>
+            `,
+            'calendar': `
+                <h1>식단 달력</h1>
+                <p>월간 식단표를 확인하실 수 있습니다.</p>
+            `,
+            'settings': `
+                <h1>설정</h1>
+                <div class="settings-list">
+                    <div class="setting-item">알림 설정</div>
+                    <div class="setting-item">테마 설정</div>
+                    <div class="setting-item">앱 정보</div>
+                </div>
+            `
+        };
+
+        contentArea.innerHTML = pageContent[page] || '<h1>페이지를 찾을 수 없습니다</h1>';
+    }
+
+    // 키보드 네비게이션 지원
+    document.addEventListener('keydown', function(e) {
+        const currentActive = document.querySelector('.nav-item.active');
+        const navItems = Array.from(document.querySelectorAll('.nav-item'));
+        const currentIndex = navItems.indexOf(currentActive);
+
+        if (e.key === 'ArrowLeft' && currentIndex > 0) {
+            navItems[currentIndex - 1].click();
+        } else if (e.key === 'ArrowRight' && currentIndex < navItems.length - 1) {
+            navItems[currentIndex + 1].click();
+        }
+    });
+
+    // 스와이프 제스처 지원 (터치 기기)
+    let startX, startY, distX, distY;
+    const threshold = 100;
+
+    contentArea.addEventListener('touchstart', function(e) {
+        const touch = e.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+    });
+
+    contentArea.addEventListener('touchend', function(e) {
+        const touch = e.changedTouches[0];
+        distX = touch.clientX - startX;
+        distY = touch.clientY - startY;
+
+        if (Math.abs(distX) > Math.abs(distY) && Math.abs(distX) > threshold) {
+            const currentActive = document.querySelector('.nav-item.active');
+            const navItems = Array.from(document.querySelectorAll('.nav-item'));
+            const currentIndex = navItems.indexOf(currentActive);
+
+            if (distX > 0 && currentIndex > 0) {
+                // 오른쪽 스와이프 - 이전 탭
+                navItems[currentIndex - 1].click();
+            } else if (distX < 0 && currentIndex < navItems.length - 1) {
+                // 왼쪽 스와이프 - 다음 탭
+                navItems[currentIndex + 1].click();
+            }
+        }
+    });
 });
