@@ -57,12 +57,12 @@ function SimplePage({ title, children }) {
     <main className="main-content page-content">
       <div className="header simple">
         <div onClick={() => (window.location.href = '/')}> 
-          <img src="/src/logo.png" alt="남도밥 로고" width="48" height="48" />
+          <img src="/src/logo.png" alt="남도인 로고" width="48" height="48" />
         </div>
         <h2 style={{ marginLeft: 12 }}>{title}</h2>
       </div>
       <div className="container" style={{ padding: '16px' }}>
-        {children || <p>남도밥에 오신 것을 환영합니다.</p>}
+        {children || <p>남도인에 오신 것을 환영합니다.</p>}
       </div>
     </main>
   );

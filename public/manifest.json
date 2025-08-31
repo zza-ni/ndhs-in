@@ -1,6 +1,6 @@
 {
-    "name": "남도밥",
-    "short_name": "남도밥",
+    "name": "남도인",
+    "short_name": "남도인",
     "start_url": "/index.html",
     "display": "standalone",
     "background_color": "#054A2D",
@@ -23,15 +23,15 @@
             "sizes": "508x748",
             "type": "image/png",
             "form_factor": "narrow",
-            "label": "남도밥"
+            "label": "남도인"
         },
         {
             "src": "/src/image1.png",
             "sizes": "508x748",
             "type": "image/png",
             "form_factor": "wide",
-            "label": "남도밥"
+            "label": "남도인"
         }
     ],
-    "description": "남도학숙 식단을 한 눈에!"
+    "description": "남도학숙 인트라넷 플랫폼"
 }

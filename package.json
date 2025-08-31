@@ -12,15 +12,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Jeongsj/ndhs-bob.git"
+    "url": "git+https://github.com/Jeongsj/ndhs-in.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/Jeongsj/ndhs-bob/issues"
+    "url": "https://github.com/Jeongsj/ndhs-in/issues"
   },
-  "homepage": "https://github.com/Jeongsj/ndhs-bob#readme",
+  "homepage": "https://github.com/Jeongsj/ndhs-in#readme",
   "dependencies": {
     "firebase": "^10.12.5",
     "firebase-admin": "^13.4.0",

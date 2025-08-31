@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { requestPushPermission, trySaveTokenIfGranted } from '../initApp';
 
-// Utils copied from previous implementation
+
 const days = ['월', '화', '수', '목', '금', '토', '일'];
 const now = new Date();
 const tz = 'Asia/Seoul';
@@ -43,16 +43,6 @@ const getActiveMeal = () => {
   if (time < 480) return { meal: 'breakfast', dayIndex: getTodayIndex(), date: DateToStr(now) };
   if (time < 780) return { meal: 'lunch', dayIndex: getTodayIndex(), date: DateToStr(now) };
   return { meal: 'dinner', dayIndex: getTodayIndex(), date: DateToStr(now) };
-};
-
-const firebaseConfig = {
-  apiKey: 'AIzaSyCeqeuQkTb3wioxIogkn7hcUQz9FP2K1XA',
-  authDomain: 'ndhs-bob.firebaseapp.com',
-  projectId: 'ndhs-bob',
-  storageBucket: 'ndhs-bob.firebasestorage.app',
-  messagingSenderId: '109335510565',
-  appId: '1:109335510565:web:8777eb5e791089da23c9cc',
-  measurementId: 'G-32BMZXN9CQ',
 };
 
 function useQueryDate() {
@@ -220,7 +210,7 @@ export default function MenuPage() {
       <main className="main-content page-content">
         <div className="header">
           <div onClick={() => (window.location.href = '/')}> 
-            <img src="/src/logo.png" alt="남도밥 로고" width="48" height="48" />
+            <img src="/src/logo.png" alt="남도인 로고" width="48" height="48" />
           </div>
           <button id="prev-week" className="week-control" onClick={onPrev}>
             &#60;
@@ -251,7 +241,7 @@ export default function MenuPage() {
         <div className="snackbar-content">
           <div>
             <strong>홈 화면에 행운의 아이콘을</strong>
-            <div className="snackbar-desc">남도밥🍀을 심어보세요!<br /></div>
+            <div className="snackbar-desc">남도인🍀을 심어보세요!<br /></div>
           </div>
           <button id="snackbar-install-btn" onClick={requestInstall}>설치</button>
         </div>
@@ -261,7 +251,7 @@ export default function MenuPage() {
       <div className="modal" id="modal-ios-install" style={{ display: 'none' }}>
         <div className="modal-content">
           <img src="/src/ios-app-icon.png" alt="앱 아이콘" width="48" height="48" />
-          <h2>남도밥</h2>
+          <h2>남도인</h2>
           <div className="modal-guide">
             <p>
               <img src="/src/ios-share.png" alt="공유 버튼" width="17" style={{ verticalAlign: 'middle' }} /> &nbsp; 버튼을

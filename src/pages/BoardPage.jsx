@@ -5,7 +5,7 @@ export default function BoardPage() {
     <main className="main-content page-content">
       <div className="header simple">
         <div onClick={() => (window.location.href = '/')}> 
-          <img src="/src/logo.png" alt="남도밥 로고" width="48" height="48" />
+          <img src="/src/logo.png" alt="남도인 로고" width="48" height="48" />
         </div>
         <h2 style={{ marginLeft: 12 }}>게시판</h2>
       </div>
