@@ -19,7 +19,8 @@ let messaging;
 function registerServiceWorkers() {
   if ('serviceWorker' in navigator) {
     try {
-      navigator.serviceWorker.register('/src/service-worker.js');
+  // Root-scoped SW for PWA control
+  navigator.serviceWorker.register('/service-worker.js');
       navigator.serviceWorker.register('/firebase-messaging-sw.js');
     } catch {}
   }

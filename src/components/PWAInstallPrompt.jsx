@@ -15,13 +15,55 @@ const isSafari = () => {
   return isiOS() && /Safari/i.test(ua) && !/CriOS/i.test(ua) && !isKakaoInAppBrowser() && !/FBAV|Line/i.test(ua);
 };
 
+// Capture early fired beforeinstallprompt events so we don't miss them on mobile
+let earlyBIPEvent = null;
+if (typeof window !== 'undefined') {
+  window.addEventListener(
+    'beforeinstallprompt',
+    (e) => {
+      try { if (e && typeof e.preventDefault === 'function') e.preventDefault(); } catch {}
+      earlyBIPEvent = e;
+    },
+    { once: true }
+  );
+}
+
 export default function PWAInstallPrompt() {
   const [deferred, setDeferred] = React.useState(null);
   const [showSnack, setShowSnack] = React.useState(false);
   const [showIOSModal, setShowIOSModal] = React.useState(false);
   const snackTimerRef = React.useRef(null);
+  const installingRef = React.useRef(false);
+  const fallbackTimerRef = React.useRef(null);
+
+  const isInstalled = React.useMemo(() => {
+    try {
+      const dm = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
+      const iosStandalone = typeof navigator !== 'undefined' && 'standalone' in navigator && navigator.standalone;
+      const twa = typeof document !== 'undefined' && document.referrer && document.referrer.startsWith('android-app://');
+      return Boolean(dm || iosStandalone || twa);
+    } catch {
+      return false;
+    }
+  }, []);
 
   React.useEffect(() => {
+    // Do not show snackbar in installed PWA / TWA
+    if (isInstalled) return;
+
+    // iOS fallback: show snackbar after a short delay with manual install guidance
+    if (isiOS()) {
+      if (snackTimerRef.current) clearTimeout(snackTimerRef.current);
+      snackTimerRef.current = setTimeout(() => setShowSnack(true), 1500);
+    }
+    // Android fallback: show snackbar after a delay if event hasn't fired yet
+    if (!isiOS()) {
+      if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
+      fallbackTimerRef.current = setTimeout(() => {
+        if (!deferred) setShowSnack(true);
+      }, 1500);
+    }
+
     const onBefore = (e) => {
       try {
         if (e && typeof e.preventDefault === 'function') e.preventDefault();
@@ -40,14 +82,24 @@ export default function PWAInstallPrompt() {
         snackTimerRef.current = null;
       }
     };
-    window.addEventListener('beforeinstallprompt', onBefore);
+    // Consume early event if it already fired before mount
+    if (earlyBIPEvent && !deferred) {
+      onBefore(earlyBIPEvent);
+      earlyBIPEvent = null;
+    }
+    // Also listen for future events (if not already handled)
+    window.addEventListener('beforeinstallprompt', onBefore, { once: true });
     window.addEventListener('appinstalled', onInstalled);
     return () => {
-      window.removeEventListener('beforeinstallprompt', onBefore);
+  window.removeEventListener('beforeinstallprompt', onBefore);
       window.removeEventListener('appinstalled', onInstalled);
       if (snackTimerRef.current) {
         clearTimeout(snackTimerRef.current);
         snackTimerRef.current = null;
+      }
+      if (fallbackTimerRef.current) {
+        clearTimeout(fallbackTimerRef.current);
+        fallbackTimerRef.current = null;
       }
     };
   }, []);
@@ -57,11 +109,37 @@ export default function PWAInstallPrompt() {
       setShowIOSModal(true);
       return;
     }
-    if (!deferred) return;
-    deferred.prompt();
-    await deferred.userChoice;
-    setDeferred(null);
-    setShowSnack(false);
+    // Android: if event not yet available, wait briefly for it then prompt immediately
+    if (!deferred) {
+      if (installingRef.current) return; // avoid duplicate waits
+      installingRef.current = true;
+      const eventOrNull = await new Promise((resolve) => {
+        if (earlyBIPEvent) {
+          const e = earlyBIPEvent; earlyBIPEvent = null; resolve(e); return;
+        }
+        const handler = (e) => {
+          try { if (e && typeof e.preventDefault === 'function') e.preventDefault(); } catch {}
+          window.removeEventListener('beforeinstallprompt', handler);
+          resolve(e);
+        };
+        window.addEventListener('beforeinstallprompt', handler, { once: true });
+        // timeout fallback: give up silently after 6000ms
+        setTimeout(() => {
+          try { window.removeEventListener('beforeinstallprompt', handler); } catch {}
+          resolve(null);
+        }, 6000);
+      });
+      installingRef.current = false;
+      if (!eventOrNull) return;
+      setDeferred(eventOrNull);
+    }
+    try {
+      deferred.prompt();
+      await deferred.userChoice;
+    } finally {
+      setDeferred(null);
+      setShowSnack(false);
+    }
   };
 
   return (

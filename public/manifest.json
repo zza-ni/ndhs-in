@@ -3,12 +3,13 @@
     "short_name": "남도인",
     "description": "남도학숙 인트라넷 플랫폼",
     "lang": "ko",
-    "start_url": "/",
+    "start_url": "/?source=pwa",
     "scope": "/",
     "display": "standalone",
     "orientation": "portrait",
     "background_color": "#FFFEE6",
     "theme_color": "#054A2D",
+    "prefer_related_applications": false,
     "icons": [
         {
             "src": "/src/icon-192x192.png",
