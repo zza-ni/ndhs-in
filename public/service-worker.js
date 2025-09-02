@@ -94,21 +94,7 @@ self.addEventListener('fetch', (event) => {
 });
 
 // Generic Web Push handler (for iOS Safari PWA and other browsers using the W3C Push API)
-self.addEventListener('push', (event) => {
-  try {
-    const data = event.data ? event.data.json() : {};
-    const title = data.title || '알림';
-    const options = {
-      body: data.body || '',
-      icon: data.icon || '/src/icon-192x192.png',
-      badge: data.badge || '/src/icon-192x192.png',
-      data: { url: data.click_action || data.url || '/' },
-    };
-    event.waitUntil(self.registration.showNotification(title, options));
-  } catch (e) {
-    // ignore malformed push payloads
-  }
-});
+// Web Push 비활성화: 일반 push 이벤트 핸들러 제거됨 (FCM messaging.onBackgroundMessage만 사용)
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();

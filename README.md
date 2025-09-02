@@ -26,4 +26,4 @@ npm run preview
 
 ## 주의사항
 - FCM은 HTTPS + 실제 도메인/localhost 환경에서만 정상 동작합니다.
-- 서비스워커 파일 경로는 `index.html` 기준으로 `/src/service-worker.js`, `/firebase-messaging-sw.js`에 맞춰져 있습니다.
+ - 서비스워커 파일 경로는 `index.html` 기준으로 `/service-worker.js` 하나만 사용합니다.

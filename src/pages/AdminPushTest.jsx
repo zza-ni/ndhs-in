@@ -8,21 +8,18 @@ export default function AdminPushTest() {
   const [password, setPassword] = React.useState('');
   const [title, setTitle] = React.useState('테스트 알림');
   const [body, setBody] = React.useState('남도인에서 보내는 테스트 메시지');
-  const [url, setUrl] = React.useState('/');
-  const [icon, setIcon] = React.useState('/src/icon-192x192.png');
+  // 웹푸시 제거: URL/Icon 입력 제거
   const [sending, setSending] = React.useState(false);
   const [result, setResult] = React.useState('');
-  const [type, setType] = React.useState('all'); // all | fcm | web
+  const [type, setType] = React.useState('all'); // all | fcm (둘 다 FCM 경로)
 
   const onSend = async () => {
     if (sending) return;
     setSending(true);
     setResult('');
     try {
-      const path = type === 'web' ? '/api/sendWebPush' : (type === 'all' ? '/api/sendAllPush' : '/api/sendPush');
-      const payload = type === 'web'
-        ? { password, title, body, url, icon }
-        : (type === 'all' ? { password, title, body, url, icon } : { password, title, body });
+  const path = type === 'all' ? '/api/sendAllPush' : '/api/sendPush';
+  const payload = { password, title, body };
       const res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const data = await res.json().catch(() => ({}));
       setResult(res.ok ? (data?.message || '전송 완료') : `오류: ${data?.message || res.statusText}`);
@@ -39,8 +36,7 @@ export default function AdminPushTest() {
       <label htmlFor="type-all" role="tab" aria-selected={type === 'all'}>전체</label>
       <input type="radio" id="type-fcm" name="push-type" checked={type === 'fcm'} onChange={() => setType('fcm')} />
       <label htmlFor="type-fcm" role="tab" aria-selected={type === 'fcm'}>FCM</label>
-      <input type="radio" id="type-web" name="push-type" checked={type === 'web'} onChange={() => setType('web')} />
-      <label htmlFor="type-web" role="tab" aria-selected={type === 'web'}>웹푸시</label>
+  {/* 웹푸시 옵션 제거 */}
     </div>
   );
 
@@ -60,7 +56,7 @@ export default function AdminPushTest() {
           </CardHeader>
           <CardBody style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
             <div>
-              <span className="muted">iOS는 웹푸시, Android/데스크탑은 FCM.</span>
+              <span className="muted">모든 플랫폼은 FCM으로 전송됩니다.</span>
             </div>
             <button className={form.btn} onClick={onSend} disabled={sending || !password || !title || !body}>
               {sending ? '전송 중…' : '전송'}
@@ -97,18 +93,7 @@ export default function AdminPushTest() {
 
             <Divider />
 
-            <div style={{ display: 'grid', gap: 12, gridTemplateColumns: '1fr 1fr', maxWidth: 720 }}>
-              <label>
-                <span className="muted">URL (웹푸시 클릭 이동)</span>
-                <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="/ 또는 https://…" />
-                <Hint>웹푸시에만 적용됩니다. 비우면 홈(/)로 이동.</Hint>
-              </label>
-              <label>
-                <span className="muted">아이콘 (웹푸시)</span>
-                <input value={icon} onChange={(e) => setIcon(e.target.value)} placeholder="/src/icon-192x192.png" />
-                <Hint>웹푸시에만 적용됩니다. 미지정 시 기본 아이콘.</Hint>
-              </label>
-            </div>
+            {/* 웹푸시 전용 필드 제거됨 */}
             </CardBody>
           </Card>
 

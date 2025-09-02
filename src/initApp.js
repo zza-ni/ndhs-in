@@ -49,13 +49,7 @@ function saveTokenToServer(token) {
   }).then((r) => r.json());
 }
 
-function saveSubscriptionToServer(subscription, userId) {
-  return fetch('/api/saveSubscription', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ subscription, userId: userId || null }),
-  }).then((r) => r.json());
-}
+// 웹 푸시 비활성화: 구독 저장 엔드포인트 제거
 
 // Helpers
 const isInstalledPWA = () => {
@@ -70,16 +64,6 @@ const isInstalledPWA = () => {
 };
 const isApple = () => {
   try { return /iPhone|iPad|iPod/i.test(navigator.userAgent || ''); } catch { return false; }
-};
-const urlBase64ToUint8Array = (base64String) => {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const rawData = typeof window !== 'undefined' ? window.atob(base64) : Buffer.from(base64, 'base64').toString('binary');
-  const outputArray = new Uint8Array(rawData.length);
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
-  }
-  return outputArray;
 };
 
 export async function trySaveTokenIfGranted() {
@@ -106,29 +90,7 @@ export async function trySaveTokenIfGranted() {
   }
 }
 
-export async function trySaveWebSubIfGranted() {
-  try {
-    if (!('Notification' in window) || !('PushManager' in window)) return false;
-    if (!isInstalledPWA()) return false; // iOS Safari requires installed PWA for push
-    if (Notification.permission !== 'granted') return false;
-    const vapidPub = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_VAPID_PUBLIC_KEY) || '';
-    if (!vapidPub) return false;
-    const reg = await navigator.serviceWorker.ready;
-    const sub = await reg.pushManager.getSubscription();
-    const subscription = sub || (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(vapidPub) }));
-    if (!subscription) return false;
-    const saved = localStorage.getItem('savedWebSub');
-    const endpoint = subscription.endpoint;
-    if (endpoint && saved !== endpoint) {
-      await saveSubscriptionToServer(subscription);
-      localStorage.setItem('savedWebSub', endpoint);
-      localStorage.setItem('pushRegistered', 'true');
-    }
-    return true;
-  } catch {
-    return false;
-  }
-}
+// 웹 푸시 비활성화: 관련 로직 제거
 
 export async function requestPushPermission() {
   await initFirebase();
@@ -137,12 +99,7 @@ export async function requestPushPermission() {
   const permission = await Notification.requestPermission();
   if (permission !== 'granted') return false;
 
-  // Prefer Web Push on installed iOS PWA when available
-  if (isApple() && isInstalledPWA() && 'PushManager' in window) {
-    const ok = await trySaveWebSubIfGranted();
-    if (ok) return true;
-    // fallthrough to FCM if web push path failed
-  }
+  // 웹 푸시 비활성화: FCM 경로만 사용
 
   if (!messaging) return false;
   const registration = await navigator.serviceWorker.ready;
@@ -165,9 +122,6 @@ export async function requestPushPermission() {
 }
 
 export async function tryEnsurePushRegistered() {
-  // Try both paths; succeed if either registers
-  const webOk = await trySaveWebSubIfGranted();
-  if (webOk) return true;
   const fcmOk = await trySaveTokenIfGranted();
   return !!fcmOk;
 }
@@ -177,5 +131,6 @@ export async function tryEnsurePushRegistered() {
   await initFirebase();
   registerServiceWorkers();
   // best-effort save if already granted
+  try { localStorage.removeItem('savedWebSub'); } catch {}
   tryEnsurePushRegistered();
 })();

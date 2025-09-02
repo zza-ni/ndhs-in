@@ -27,12 +27,11 @@ export default function SettingsPage() {
   const [pushStatus, setPushStatus] = useState('확인 중');
   useEffect(() => {
     const hasFCM = !!localStorage.getItem('savedPushToken');
-    const hasWeb = !!localStorage.getItem('savedWebSub');
     if (!('Notification' in window)) {
       setPushStatus('미지원');
       return;
     }
-    if (hasFCM || hasWeb) {
+    if (hasFCM) {
       setPushStatus('등록됨');
       return;
     }
