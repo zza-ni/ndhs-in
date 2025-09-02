@@ -1,19 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { requestPushPermission, trySaveTokenIfGranted } from '../initApp';
 
 
 const days = ['월', '화', '수', '목', '금', '토', '일'];
 const now = new Date();
 const tz = 'Asia/Seoul';
 const DateToStr = (date = new Date()) => date.toLocaleDateString('en-CA', { timeZone: tz }).replace(/-/g, '');
-const isiOS = () => /iphone|ipad|ipod/i.test(window.navigator.userAgent);
-const isKakaoInAppBrowser = () => /KAKAOTALK/i.test(window.navigator.userAgent);
-const isSafari = () => {
-  const ua = window.navigator.userAgent;
-  return isiOS() && /Safari/i.test(ua) && !/CriOS/i.test(ua) && !isKakaoInAppBrowser() && !/FBAV|Line/i.test(ua);
-};
-const isInStandaloneMode = () =>
-  (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
 const strToDate = (yyyymmdd) => new Date(yyyymmdd.slice(0, 4), yyyymmdd.slice(4, 6) - 1, yyyymmdd.slice(6, 8));
 const getDayIdx = (dateStr) => {
   const date = strToDate(dateStr);
@@ -67,39 +58,6 @@ function useQueryDate() {
   return [date, setQueryDate];
 }
 
-function usePWAInstallPrompt() {
-  const [deferred, setDeferred] = useState(null);
-  const snackbarRef = useRef(null);
-  useEffect(() => {
-    const onBefore = (e) => {
-      e.preventDefault();
-      setDeferred(e);
-    };
-    window.addEventListener('beforeinstallprompt', onBefore);
-    window.addEventListener('appinstalled', () => setDeferred(null));
-    return () => {
-      window.removeEventListener('beforeinstallprompt', onBefore);
-    };
-  }, []);
-  const requestInstall = async () => {
-    if (isiOS()) {
-      const modal = document.getElementById('modal-ios-install');
-      if (modal) modal.style.display = 'flex';
-      if (!isSafari()) {
-        const guide = modal?.getElementsByClassName('modal-guide')[0];
-        if (guide)
-          guide.innerHTML = `<p>1.&nbsp;&nbsp;<img src="./src/ios-share.png" alt="공유 버튼" width="15" style="vertical-align:middle"> &nbsp; 버튼을 누르고 <b style="color:blue">Safari로 열기</b></p><p>2.&nbsp;&nbsp;<img src="./src/ios-share.png" alt="공유 버튼" width="15" style="vertical-align:middle"> &nbsp; 버튼을 누르고 <b style=\"color:blue\">홈 화면에 추가하기</b></p>`;
-      }
-      return;
-    }
-    if (!deferred) return;
-    deferred.prompt();
-    await deferred.userChoice;
-    setDeferred(null);
-    if (snackbarRef.current) snackbarRef.current.style.display = 'none';
-  };
-  return { requestInstall, snackbarRef };
-}
 
 function SegmentedTabs({ selectedIndex, onChange }) {
   return (
@@ -137,28 +95,10 @@ export default function MenuPage() {
   const [selectedTab, setSelectedTab] = useState(() => getDayIdx(queryDate));
   const showWeekDateRef = useRef(getWednesdayOfWeek(queryDate));
   const nextBtnRef = useRef(null);
-  const { requestInstall, snackbarRef } = usePWAInstallPrompt();
 
   // 글로벌 초기화가 main에서 이루어지므로 이 페이지에서는 불필요
 
-  useEffect(() => {
-    let pushAlreadyRequested = false;
-    const savedToken = localStorage.getItem('savedPushToken');
-    const modalPush = document.getElementById('modal-get-push');
-    const btn = document.getElementById('btnRequestPush');
-    const showModal = () => { if (modalPush) modalPush.style.display = 'flex'; };
-    const checkAndShowModal = () => { if (isInStandaloneMode() & (Notification.permission === 'default') && !pushAlreadyRequested) showModal(); else if (modalPush) modalPush.style.display = 'none'; };
-    if (savedToken) { pushAlreadyRequested = true; if (modalPush) modalPush.style.display = 'none'; } else { checkAndShowModal(); }
-    btn?.addEventListener('click', async () => {
-      if (pushAlreadyRequested) { if (modalPush) modalPush.style.display = 'none'; return; }
-      btn.disabled = true;
-      const ok = await requestPushPermission();
-      btn.disabled = false;
-      if (ok) { pushAlreadyRequested = true; if (modalPush) modalPush.style.display = 'none'; }
-    });
-    // 최초 진입 시 권한이 이미 허용된 경우 토큰 저장 시도
-    trySaveTokenIfGranted();
-  }, []);
+  // Push prompt handled globally by component
 
   const fetchWeek = (wednesdayDateObj) => {
     const jsonPath = `/data/${DateToStr(wednesdayDateObj)}.json`;
@@ -236,44 +176,7 @@ export default function MenuPage() {
         </div>
       </main>
 
-      {/* PWA Snackbar */}
-      <div id="pwa-snackbar" style={{ display: 'none' }} ref={snackbarRef}>
-        <div className="snackbar-content">
-          <div>
-            <strong>홈 화면에 행운의 아이콘을</strong>
-            <div className="snackbar-desc">남도인🍀을 심어보세요!<br /></div>
-          </div>
-          <button id="snackbar-install-btn" onClick={requestInstall}>설치</button>
-        </div>
-      </div>
-
-      {/* iOS install modal */}
-      <div className="modal" id="modal-ios-install" style={{ display: 'none' }}>
-        <div className="modal-content">
-          <img src="/src/ios-app-icon.png" alt="앱 아이콘" width="48" height="48" />
-          <h2>남도인</h2>
-          <div className="modal-guide">
-            <p>
-              <img src="/src/ios-share.png" alt="공유 버튼" width="17" style={{ verticalAlign: 'middle' }} /> &nbsp; 버튼을
-              누르고 <b style={{ color: 'blue' }}>홈 화면에 추가하기</b>
-            </p>
-          </div>
-          <button className="modal-close" onClick={(e) => (e.currentTarget.parentElement.parentElement.style.display = 'none')}>
-            닫기
-          </button>
-        </div>
-      </div>
-
-      {/* Push permission modal */}
-      <div className="modal" id="modal-get-push" style={{ display: 'none' }}>
-        <div className="modal-content">
-          <h2>알림 받기</h2>
-          <p>매일 규칙적인 식사로 건강을 챙겨보세요!</p>
-          <button id="btnRequestPush" className="modal-close" onClick={(e) => (e.currentTarget.parentElement.parentElement.style.display = 'none')}>
-            닫기
-          </button>
-        </div>
-      </div>
+  {/* Prompts moved to App root for global display */}
     </>
   );
 }

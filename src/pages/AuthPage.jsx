@@ -63,7 +63,7 @@ export default function AuthPage() {
       <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', maxHeight: 'calc(70vh)', padding: 16 }}>
         <div className="card" style={{ maxWidth: 480, width: '100%' }}>
           <div className="card-header">
-            <h3 className="card-title">계정 로그인</h3>
+            <h3 className="card-title">남도학숙 계정 로그인</h3>
           </div>
           <form className="card-body" style={{ display: 'grid', gap: 12 }} onSubmit={onSubmit}>
             <div style={{ position: 'relative' }}>
@@ -101,6 +101,29 @@ export default function AuthPage() {
                 <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
                 <span>아이디 저장</span>
               </label>
+            </div>
+            <div
+              role="note"
+              aria-live="polite"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                marginTop: 8,
+                color: 'var(--sub-font-color)',
+                fontSize: 12,
+                background: 'var(--white)',
+                border: '1px solid var(--disable-color)',
+                padding: '8px 10px',
+                borderRadius: 8
+              }}
+            >
+              <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" style={{ color: 'var(--focus-color)' }}>
+                <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2" />
+                <path d="M12 17v-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                <circle cx="12" cy="7.5" r="1.25" fill="currentColor" />
+              </svg>
+              <div>남도인은 아이디, 비밀번호를 저장하지 않습니다.</div>
             </div>
             {error && (
               <div role="alert" className="card-error" style={{ marginTop: 4 }}>
