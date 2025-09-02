@@ -1,4 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { Card, CardHeader, CardTitle, CardBody } from '../components/ui/Card';
+import { Chip } from '../components/ui/Chip';
+import { CardSkeleton, CardError } from '../components/ui/Skeletons';
 import { Link } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
 import { getNoticeListCache, isNoticeCacheFresh, setNoticeListCache } from '../lib/noticeCache';
@@ -158,51 +161,39 @@ export default function HomePage() {
       <div className="container">
         <section className="home-cards">
           {/* 1) 현재 active된 메뉴 */}
-          <article className="card">
-            <div className="card-header">
+          <Card as="article">
+            <CardHeader>
               <div className="card-title-row">
-                <h3 className="card-title">식단</h3>
+                <CardTitle>식단</CardTitle>
                 {menuOfToday?.mealLabel && (
-                  <span
-                    className={`chip chip-sm meal-${active.meal}`}
-                    aria-label={`현재 식사: ${menuOfToday?.mealLabel}`}
-                    title={`현재 식사: ${menuOfToday?.mealLabel}`}
-                  >
+                  <Chip size="sm" className={`meal-${active.meal}`} aria-label={`현재 식사: ${menuOfToday?.mealLabel}`} title={`현재 식사: ${menuOfToday?.mealLabel}`}>
                     {menuOfToday?.dateLabel} {menuOfToday?.mealLabel}
-                  </span>
+                  </Chip>
                 )}
               </div>
               <Link className="card-link" to="/menu" aria-label="식단표 보러가기">→</Link>
-            </div>
+            </CardHeader>
             {menuLoading ? (
-              <div className="skeleton-list" style={{ margin: 0 }}>
-                <div className="skeleton skeleton-title" />
-                <div className="skeleton skeleton-line" />
-                <div className="skeleton skeleton-line short" />
-              </div>
+              <CardSkeleton lines={2} withTitle={true} />
             ) : menuError ? (
-              <p className="card-error">{menuError}</p>
+              <CardError message={menuError} />
             ) : (
-              <div className="card-body" role="status" aria-live="polite">
+              <CardBody role="status" aria-live="polite">
                 <div className="card-text" style={{ whiteSpace: 'pre-line' }}>{menuOfToday?.items || '-'}</div>
-              </div>
+              </CardBody>
             )}
-          </article>
+          </Card>
 
           {/* 2) 공지사항 최신 글 3개 */}
-          <article className="card">
-            <div className="card-header">
-              <h3 className="card-title">공지사항</h3>
+          <Card as="article">
+            <CardHeader>
+              <CardTitle>공지사항</CardTitle>
               <Link className="card-link" to="/notice" aria-label="공지 더보기">→</Link>
-            </div>
+            </CardHeader>
             {noticeLoading ? (
-              <div className="skeleton-list" style={{ margin: 0 }}>
-                {[0,1,2].map((i) => (
-                  <div key={i} className="skeleton skeleton-line" style={{ marginTop: 8 }} />
-                ))}
-              </div>
+              <CardSkeleton lines={3} withTitle={false} />
             ) : noticeError ? (
-              <p className="card-error">{noticeError}</p>
+              <CardError message={noticeError} />
             ) : (
               <ul className="card-list" role="list">
                 {topNotices.map((n, idx) => {
@@ -215,7 +206,7 @@ export default function HomePage() {
                         aria-label={`${n.title || '공지'} ${formatNoticeDate(n.created_at)} 공지${n.tag ? `, 태그 ${n.tag}` : ''}`}
                       >
                         <span className="card-list-main">
-                          {n.tag && <span className="chip chip-sm" aria-label={`태그 ${n.tag}`}>{n.tag}</span>}
+                          {n.tag && <Chip size="sm" aria-label={`태그 ${n.tag}`}>{n.tag}</Chip>}
                           <span className="card-list-title" title={n.title}>{n.title || '공지'}</span>
                         </span>
                         <span className="card-list-date">{formatNoticeDate(n.created_at)}</span>
@@ -225,12 +216,12 @@ export default function HomePage() {
                 })}
               </ul>
             )}
-          </article>
+          </Card>
 
           {/* 3) 건조기 사용현황 */}
-          <article className="card">
-            <div className="card-header">
-              <h3 className="card-title">건조기 사용현황</h3>
+          <Card as="article">
+            <CardHeader>
+              <CardTitle>건조기 사용현황</CardTitle>
               <button className="card-link" onClick={() => {
                 // 간단 새로고침
                 (async () => {
@@ -252,17 +243,13 @@ export default function HomePage() {
                   }
                 })();
               }} aria-label="새로고침">↻</button>
-            </div>
+            </CardHeader>
             {dryerLoading ? (
-              <div className="skeleton-list" style={{ margin: 0 }}>
-                <div className="skeleton skeleton-title" />
-                <div className="skeleton skeleton-line" />
-                <div className="skeleton skeleton-line short" />
-              </div>
+              <CardSkeleton lines={2} withTitle={true} />
             ) : dryerError ? (
-              <p className="card-error">{dryerError}</p>
+              <CardError message={dryerError} />
             ) : (
-              <div className="card-body">
+              <CardBody>
                 <div style={{ display: 'flex', gap: 6, justifyContent: 'space-between', flexWrap: 'wrap' }}>
                   {dryers.map((d, idx) => {
                     const status = String(d.equipmentStatusCd || '').toLowerCase();
@@ -307,9 +294,9 @@ export default function HomePage() {
                     );
                   })}
                 </div>
-              </div>
+              </CardBody>
             )}
-          </article>
+          </Card>
         </section>
       </div>
     </main>

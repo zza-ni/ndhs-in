@@ -27,7 +27,7 @@ export default function PushPermissionPrompt() {
     if (typeof window === 'undefined' || !('Notification' in window)) return;
     try {
       if (Notification.permission === 'granted') {
-  import('../initApp').then((m) => m.trySaveTokenIfGranted && m.trySaveTokenIfGranted()).catch(() => {});
+        import('../initApp').then((m) => (m.tryEnsurePushRegistered && m.tryEnsurePushRegistered()) || (m.trySaveTokenIfGranted && m.trySaveTokenIfGranted())).catch(() => {});
         return;
       }
       if (Notification.permission === 'default') {

@@ -1,5 +1,6 @@
 import React from 'react';
 import PageHeader from '../components/PageHeader';
+import { Card, CardHeader, CardTitle, CardBody } from '../components/ui/Card';
 
 export default function OvernightPage() {
   // 오늘 날짜 yyyy-mm-dd
@@ -35,11 +36,11 @@ export default function OvernightPage() {
     <main className="main-content page-content">
   <PageHeader title="외박 신청" />
       <div className="container">
-        <div className="card">
-          <div className="card-header">
-            <h3 className="card-title">외박 신청</h3>
-          </div>
-          <div className="card-body" style={{ display: 'grid', gap: 12 }}>
+        <Card>
+          <CardHeader>
+            <CardTitle>외박 신청</CardTitle>
+          </CardHeader>
+          <CardBody style={{ display: 'grid', gap: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <label style={{ fontWeight: 700, minWidth: 60, marginBottom: 0 }}>복귀 예정일</label>
               <input
@@ -61,8 +62,8 @@ export default function OvernightPage() {
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
               <button className="btn" disabled={!!dateError} aria-disabled={!!dateError} title={dateError || undefined}>신청</button>
             </div>
-          </div>
-        </div>
+          </CardBody>
+        </Card>
       </div>
     </main>
   );

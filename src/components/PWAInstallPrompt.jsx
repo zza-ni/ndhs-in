@@ -90,9 +90,16 @@ export default function PWAInstallPrompt() {
     // Also listen for future events (if not already handled)
     window.addEventListener('beforeinstallprompt', onBefore, { once: true });
     window.addEventListener('appinstalled', onInstalled);
+    const onSWMessage = (e) => {
+      if (e && e.data && e.data.type === 'OPEN_URL' && e.data.url) {
+        try { window.location.href = e.data.url; } catch {}
+      }
+    };
+    navigator.serviceWorker && navigator.serviceWorker.addEventListener && navigator.serviceWorker.addEventListener('message', onSWMessage);
     return () => {
   window.removeEventListener('beforeinstallprompt', onBefore);
       window.removeEventListener('appinstalled', onInstalled);
+      try { navigator.serviceWorker && navigator.serviceWorker.removeEventListener && navigator.serviceWorker.removeEventListener('message', onSWMessage); } catch {}
       if (snackTimerRef.current) {
         clearTimeout(snackTimerRef.current);
         snackTimerRef.current = null;

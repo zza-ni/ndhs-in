@@ -1,5 +1,8 @@
 import React from 'react';
 import PageHeader from '../components/PageHeader';
+import Divider from '../components/ui/Divider';
+import { CardSkeleton, CardError } from '../components/ui/Skeletons';
+import { TagChip } from '../components/ui/Chip';
 import { useParams } from 'react-router-dom';
 import { getBoardListCache, isBoardCacheFresh, setBoardListCache } from '../lib/boardCache';
 import { getNoticeListCache, isNoticeCacheFresh, setNoticeListCache } from '../lib/noticeCache';
@@ -479,9 +482,9 @@ export default function BoardPage() {
   const created = await createPost({ title: title.trim(), content, tag: tag.trim() || undefined });
       // 목록 최상단에 추가
       setItems((prev) => [created, ...prev]);
-      setTitle('');
-      setContent('');
-      setTag('');
+  setTitle('');
+  setContent('');
+  setTag(TAGS[0]);
     } catch {
       alert('글쓰기에 실패했어요.');
     } finally {
@@ -525,6 +528,7 @@ export default function BoardPage() {
             <input type="radio" id="seg-board" name="seg" checked={activeTab === 'board'} onChange={() => { setActiveTab('board'); window.history.replaceState({}, '', '/board'); setLocationPath('/board'); }} />
             <label htmlFor="seg-board" role="tab" aria-selected={activeTab === 'board'} tabIndex={0}>게시판</label>
           </div>
+          <Divider />
   </div>
   {!urlPostId && activeTab === 'board' && (
           <form className="card" onSubmit={onSubmit} style={{ marginBottom: 12 }}>
@@ -573,37 +577,24 @@ export default function BoardPage() {
         )}
 
         {activeTab === 'board' && loading && (
-          <div className="skeleton-list">
+          <>
             {[0,1,2].map((i) => (
-              <div key={i} className="skeleton-card">
-                <div className="skeleton-row">
-                  <div className="skeleton skeleton-title" />
-                  <div className="skeleton skeleton-date" />
-                </div>
-                <div className="skeleton skeleton-line" />
-                <div className="skeleton skeleton-line short" />
-              </div>
+              <CardSkeleton key={i} withTitle lines={2} />
             ))}
-          </div>
+          </>
         )}
         {activeTab === 'notice' && noticeLoading && (
-          <div className="skeleton-list">
+          <>
             {[0,1].map((i) => (
-              <div key={i} className="skeleton-card">
-                <div className="skeleton-row">
-                  <div className="skeleton skeleton-title" />
-                  <div className="skeleton skeleton-date" />
-                </div>
-                <div className="skeleton skeleton-line short" />
-              </div>
+              <CardSkeleton key={i} withTitle lines={1} />
             ))}
-          </div>
+          </>
         )}
-  {error && <p style={{ color: 'tomato' }}>{error}</p>}
-  {!loading && !error && (activeTab === 'board' ? items.length === 0 : noticeItems.length === 0) && urlPostId && (
+        <CardError message={activeTab === 'board' ? error : noticeError} />
+  {!loading && !(activeTab === 'board' ? error : noticeError) && (activeTab === 'board' ? items.length === 0 : noticeItems.length === 0) && urlPostId && (
           <div className="empty-state">해당 게시글을 찾을 수 없습니다.</div>
         )}
-        {!loading && !error && (activeTab === 'board' ? items.length > 0 : noticeItems.length > 0) && (
+        {!loading && !(activeTab === 'board' ? error : noticeError) && (activeTab === 'board' ? items.length > 0 : noticeItems.length > 0) && (
           <div className="accordion">
             {(activeTab === 'board' ? items : noticeItems)
               .filter((it) => selectedTag === '전체' || it.tag === selectedTag)
@@ -622,7 +613,10 @@ export default function BoardPage() {
                       aria-expanded={isOpen}
                       aria-controls={panelId}
                     >
-                      <span className="accordion-title">{title}</span>
+                      <span className="accordion-title">
+                        {it.tag ? (<><TagChip style={{ marginRight: 6 }}>{it.tag}</TagChip>{' '}</>) : null}
+                        {title}
+                      </span>
                       <span className="accordion-date">{dateStr}</span>
                       <span className="accordion-icon" aria-hidden>▾</span>
                     </button>
@@ -655,10 +649,7 @@ export default function BoardPage() {
           <>
             <div ref={sentinelRef} style={{ height: 1 }} />
             {loadingMore && (
-              <div className="skeleton-list more">
-                <div className="skeleton skeleton-line" />
-                <div className="skeleton skeleton-line short" />
-              </div>
+              <CardSkeleton lines={2} />
             )}
           </>
         )}
