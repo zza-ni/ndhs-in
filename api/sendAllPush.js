@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     const chunkSize = 500;
     for (let i = 0; i < tokens.length; i += chunkSize) {
       const slice = tokens.slice(i, i + chunkSize);
-      const message = { notification: { title, body }, data: data || {}, tokens: slice };
+  const message = { data: { title, body, ...(data || {}) }, tokens: slice };
       const resp = await admin.messaging().sendEachForMulticast(message);
       fcmSuccess += resp.successCount || 0;
       fcmFailure += resp.failureCount || 0;

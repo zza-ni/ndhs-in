@@ -17,19 +17,24 @@ try {
     firebase.initializeApp(firebaseConfig);
   }
   const messaging = firebase.messaging();
+  // 중복 방지: notification 키가 있는 경우 FCM이 자체 표시하므로 수동 표시하지 않음
   messaging.onBackgroundMessage((payload) => {
-    const title = payload?.notification?.title || '알림';
-    const options = {
-      body: payload?.notification?.body || '',
-      icon: payload?.notification?.icon || '/src/icon-192x192.png',
+    if (payload && payload.notification) return; // auto-displayed by FCM
+    const t = payload?.data?.title;
+    const b = payload?.data?.body;
+    if (!t && !b) return; // 데이터 없음 → 표시 안 함
+  const options = {
+      body: b || '',
+      icon: payload?.data?.icon || '/src/icon-192x192.png',
+      data: { url: payload?.data?.url || '/' },
     };
-    self.registration.showNotification(title, options);
+  self.registration.showNotification(t || '알림', options);
   });
 } catch (e) {
   // ignore messaging setup failures in SW
 }
 
-const CACHE_NAME = 'ndhs-bob-cache-v1';
+const CACHE_NAME = 'ndhs-bob-cache-v2';
 const CORE_ASSETS = [
   '/',
   '/index.html',

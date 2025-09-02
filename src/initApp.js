@@ -22,6 +22,16 @@ function registerServiceWorkers() {
   // Root-scoped SW for PWA control
   navigator.serviceWorker.register('/service-worker.js');
     } catch {}
+    // Unregister legacy firebase-messaging SW if present
+    try {
+      navigator.serviceWorker.getRegistrations().then((regs) => {
+        regs.forEach((r) => {
+          if (r?.active?.scriptURL?.endsWith('/firebase-messaging-sw.js') || r?.scriptURL?.endsWith('/firebase-messaging-sw.js')) {
+            r.unregister();
+          }
+        });
+      });
+    } catch {}
   }
 }
 

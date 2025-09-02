@@ -33,51 +33,40 @@ export default async function handler(req, res) {
       return res.status(200).json({ message: "조건에 맞는 저장된 토큰이 없습니다." });
     }
 
-    const tokens = tokensSnapshot.docs.map(doc => doc.data().token);
+    const tokensRaw = tokensSnapshot.docs.map(doc => doc.data().token).filter(Boolean);
+    const tokens = Array.from(new Set(tokensRaw)); // dedupe
 
-    // 4. 메시지 페이로드 작성
-    const message = {
-      notification: { title, body },
-      data: data || {},
-      tokens,
-    };
-
-    // 5. FCM 발송
-    const response = await admin.messaging().sendEachForMulticast(message);
-
-    // 6. 실패한 토큰 확인 & Firestore에서 삭제
-    const invalidTokens = [];
-    response.responses.forEach((resp, idx) => {
-      if (!resp.success) {
-        const errorCode = resp.error?.code;
-        if (
-          errorCode === "messaging/registration-token-not-registered" ||
-          errorCode === "messaging/invalid-registration-token"
-        ) {
-          invalidTokens.push(tokens[idx]);
+    // 4. 메시지 페이로드 작성 및 청크 발송(최대 500개)
+    const chunkSize = 500;
+    let success = 0, failure = 0; const invalidTokens = [];
+    for (let i = 0; i < tokens.length; i += chunkSize) {
+      const slice = tokens.slice(i, i + chunkSize);
+      const message = { data: { title, body, ...(data || {}) }, tokens: slice };
+      const response = await admin.messaging().sendEachForMulticast(message);
+      success += response.successCount || 0;
+      failure += response.failureCount || 0;
+      response.responses.forEach((resp, idx) => {
+        if (!resp.success) {
+          const errorCode = resp.error?.code;
+          if (errorCode === 'messaging/registration-token-not-registered' || errorCode === 'messaging/invalid-registration-token') {
+            invalidTokens.push(slice[idx]);
+          }
         }
-      }
-    });
+      });
+    }
 
     if (invalidTokens.length > 0) {
       const batch = db.batch();
       for (const token of invalidTokens) {
-        const snapshot = await db.collection("tokens").where("token", "==", token).get();
+        const snapshot = await db.collection('tokens').where('token', '==', token).get();
         snapshot.forEach(doc => batch.delete(doc.ref));
       }
       await batch.commit();
     }
 
-    // 7. 결과 응답
+    // 5. 결과 응답
     return res.status(200).json({
-      message: `전송 완료: 성공 ${response.successCount}건, 실패 ${response.failureCount}건, 삭제된 토큰 ${invalidTokens.length}건`,
-      failures: response.responses
-        .map((r, i) => ({
-          success: r.success,
-          token: tokens[i],
-          error: r.error ? r.error.message : null,
-        }))
-        .filter(r => !r.success),
+      message: `전송 완료: 성공 ${success}건, 실패 ${failure}건, 삭제된 토큰 ${invalidTokens.length}건`,
     });
   } catch (error) {
     console.error("푸시 알림 전송 중 오류:", error);
