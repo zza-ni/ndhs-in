@@ -1,4 +1,5 @@
 import React from 'react';
+import PageHeader from '../components/PageHeader';
 import { useParams } from 'react-router-dom';
 import { getBoardListCache, isBoardCacheFresh, setBoardListCache } from '../lib/boardCache';
 import { getNoticeListCache, isNoticeCacheFresh, setNoticeListCache } from '../lib/noticeCache';
@@ -514,12 +515,7 @@ export default function BoardPage() {
 
   return (
     <main className="main-content page-content">
-      <div className="header simple">
-        <div onClick={() => (window.location.href = '/')}> 
-          <img src="/src/logo.png" alt="남도인 로고" width="48" height="48" />
-        </div>
-        <h2 style={{ marginLeft: 12 }}>{activeTab === 'board' ? '게시판' : '공지사항'}</h2>
-      </div>
+      <PageHeader title={activeTab === 'board' ? '게시판' : '공지사항'} />
       <div className="container" ref={scrollRef}>
   <div aria-live="polite" aria-atomic="true" style={{ position: 'absolute', left: -9999 }} ref={liveRegionRef} />
         <div style={{ padding: '10px 12px' }}>

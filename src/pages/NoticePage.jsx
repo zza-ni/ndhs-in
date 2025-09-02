@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import PageHeader from '../components/PageHeader';
 import { useParams } from 'react-router-dom';
 import { getNoticeListCache, isNoticeCacheFresh, setNoticeListCache } from '../lib/noticeCache';
 
@@ -284,12 +285,7 @@ export default function NoticePage() {
 
   return (
     <main className="main-content page-content">
-      <div className="header simple">
-        <div onClick={() => (window.location.href = '/')}> 
-          <img src="/src/logo.png" alt="남도인 로고" width="48" height="48" />
-        </div>
-        <h2 style={{ marginLeft: 12 }}>공지사항</h2>
-      </div>
+      <PageHeader title="공지사항" />
   <div className="container" ref={scrollRef}>
         {/* 태그 필터 탭: 단일 글(postId)에서는 숨김 */}
         {!loading && !postId && (

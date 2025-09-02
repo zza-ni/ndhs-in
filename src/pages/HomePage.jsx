@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import PageHeader from '../components/PageHeader';
 import { getNoticeListCache, isNoticeCacheFresh, setNoticeListCache } from '../lib/noticeCache';
 
 const days = ['월', '화', '수', '목', '금', '토', '일'];
@@ -44,6 +45,7 @@ const formatNoticeDate = (yyyymmddHHMMSS) => {
 export default function HomePage() {
   const API_ENDPOINT = import.meta.env.VITE_API_ENDPOINT;
   const NOTICE_API = `${API_ENDPOINT.replace(/\/$/, '')}/boards/notice`;
+  const LAUNDRY_API = `${API_ENDPOINT.replace(/\/$/, '')}/laundry/f`;
   const [menuLoading, setMenuLoading] = useState(true);
   const [menuError, setMenuError] = useState('');
   const [menuOfToday, setMenuOfToday] = useState(null); // { mealLabel, items, dateLabel }
@@ -51,6 +53,14 @@ export default function HomePage() {
   const [noticeLoading, setNoticeLoading] = useState(true);
   const [noticeError, setNoticeError] = useState('');
   const [topNotices, setTopNotices] = useState([]); // [{id,title,created_at}]
+
+  // Dryer status
+  const [dryerLoading, setDryerLoading] = useState(true);
+  const [dryerError, setDryerError] = useState('');
+  const [dryers, setDryers] = useState([]); // from API
+  const [dryersFetchedAt, setDryersFetchedAt] = useState(0);
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  const TOTAL_SECONDS = 3000;
 
   const active = useMemo(() => getActiveMeal(), []);
 
@@ -103,14 +113,48 @@ export default function HomePage() {
     })();
   }, [NOTICE_API]);
 
+  // Fetch dryer status
+  useEffect(() => {
+    (async () => {
+      try {
+        setDryerLoading(true);
+        setDryerError('');
+        const res = await fetch(LAUNDRY_API, { headers: { Accept: 'application/json' } });
+        if (!res.ok) throw new Error('laundry');
+        const data = await res.json();
+        const onlyDryers = (Array.isArray(data) ? data : []).filter((d) => d.equipmentTypeCd === 'DRYER');
+        // sort by numeric suffix in name if present
+        const num = (s) => {
+          const m = String(s || '').match(/(\d+)/);
+          return m ? parseInt(m[1], 10) : 9999;
+        };
+        onlyDryers.sort((a, b) => num(a.equipmentName) - num(b.equipmentName));
+        setDryers(onlyDryers.slice(0, 5));
+        setDryersFetchedAt(Date.now());
+      } catch (e) {
+        setDryerError('건조기 현황을 불러오지 못했어요.');
+      } finally {
+        setDryerLoading(false);
+      }
+    })();
+  }, [LAUNDRY_API]);
+
+  // Live countdown tick
+  useEffect(() => {
+    const id = setInterval(() => setNowTick(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const secToMMSS = (s) => {
+    const sec = Math.max(0, Math.floor(s));
+    const mm = String(Math.floor(sec / 60)).padStart(2, '0');
+    const ss = String(sec % 60).padStart(2, '0');
+    return `${mm}:${ss}`;
+  };
+
   return (
     <main className="main-content page-content">
-      <div className="header simple">
-        <div onClick={() => (window.location.href = '/')}> 
-          <img src="/src/logo.png" alt="남도인 로고" width="48" height="48" />
-        </div>
-        <h2 style={{ marginLeft: 12 }}>홈</h2>
-      </div>
+  <PageHeader title="홈" />
       <div className="container">
         <section className="home-cards">
           {/* 1) 현재 active된 메뉴 */}
@@ -183,17 +227,88 @@ export default function HomePage() {
             )}
           </article>
 
-          {/* 3) 빈 카드 (스켈레톤) */}
+          {/* 3) 건조기 사용현황 */}
           <article className="card">
             <div className="card-header">
-              <h3 className="card-title">곧 추가될 카드</h3>
-              <span className="card-link" aria-hidden>준비중</span>
+              <h3 className="card-title">건조기 사용현황</h3>
+              <button className="card-link" onClick={() => {
+                // 간단 새로고침
+                (async () => {
+                  try {
+                    setDryerLoading(true);
+                    setDryerError('');
+                    const res = await fetch(LAUNDRY_API, { headers: { Accept: 'application/json' } });
+                    if (!res.ok) throw new Error('laundry');
+                    const data = await res.json();
+                    const onlyDryers = (Array.isArray(data) ? data : []).filter((d) => d.equipmentTypeCd === 'DRYER');
+                    const num = (s) => { const m = String(s || '').match(/(\d+)/); return m ? parseInt(m[1], 10) : 9999; };
+                    onlyDryers.sort((a, b) => num(a.equipmentName) - num(b.equipmentName));
+                    setDryers(onlyDryers.slice(0, 5));
+                    setDryersFetchedAt(Date.now());
+                  } catch (e) {
+                    setDryerError('건조기 현황을 불러오지 못했어요.');
+                  } finally {
+                    setDryerLoading(false);
+                  }
+                })();
+              }} aria-label="새로고침">↻</button>
             </div>
-            <div className="skeleton-list" style={{ margin: 0 }}>
-              <div className="skeleton skeleton-title" />
-              <div className="skeleton skeleton-line" />
-              <div className="skeleton skeleton-line short" />
-            </div>
+            {dryerLoading ? (
+              <div className="skeleton-list" style={{ margin: 0 }}>
+                <div className="skeleton skeleton-title" />
+                <div className="skeleton skeleton-line" />
+                <div className="skeleton skeleton-line short" />
+              </div>
+            ) : dryerError ? (
+              <p className="card-error">{dryerError}</p>
+            ) : (
+              <div className="card-body">
+                <div style={{ display: 'flex', gap: 6, justifyContent: 'space-between', flexWrap: 'wrap' }}>
+                  {dryers.map((d, idx) => {
+                    const status = String(d.equipmentStatusCd || '').toLowerCase();
+                    const inUse = status === 'use';
+                    const usable = status === 'usable';
+                    const fetchedAgo = (nowTick - dryersFetchedAt) / 1000;
+                    const initial = Math.max(0, Number(d.time_diff || 0));
+                    const remaining = inUse ? Math.max(0, Math.min(TOTAL_SECONDS, initial - fetchedAgo)) : 0;
+                    const pct = usable ? 1 : inUse ? (1 - (remaining / TOTAL_SECONDS)) : 0; // usable=가득, inUse=경과비율, 기타=0
+                    const size = 46; // svg size (약간 더 축소)
+                    const stroke = 5;  // 두께 축소
+                    const r = (size / 2) - stroke;
+                    const c = 2 * Math.PI * r;
+                    const dash = c * pct;
+                    const name = (d.equipmentName || `건조기 ${idx + 1}`).replace(/\s*\(.*\)\s*/, '');
+                    const equipNumber = parseInt((name).match(/\d+/));
+                    const statusColor = (inUse || usable) ? '#4caf50' : '#bdbdbd';
+                    return (
+                      <div key={d.equipmentSeq || idx} className="equipment-item">
+                        <div style={{ position: 'relative', width: size, height: size }} aria-label={`${name} 남은 시간 ${secToMMSS(remaining)}`}>
+                          <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+                            <circle cx={size/2} cy={size/2} r={r} stroke="#e0e0e0" strokeWidth={stroke} fill="none" />
+                            <circle
+                              cx={size/2}
+                              cy={size/2}
+                              r={r}
+                              stroke={statusColor}
+                              strokeWidth={stroke}
+                              fill="none"
+                              strokeDasharray={`${c} ${c}`}
+                              strokeDashoffset={`${c - dash}`}
+                              strokeLinecap="round"
+                              transform={`rotate(-90 ${size/2} ${size/2})`}
+                            />
+                          </svg>
+                          <div className="equipment-number">
+                            {equipNumber}
+                          </div>
+                        </div>
+                        <div style={{ fontSize: 10, textAlign: 'center' }}>{secToMMSS(remaining)}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </article>
         </section>
       </div>

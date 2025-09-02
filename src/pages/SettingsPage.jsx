@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import PageHeader from '../components/PageHeader';
 import { requestPushPermission, trySaveTokenIfGranted } from '../initApp';
 import { clearBoardListCache } from '../lib/boardCache';
 import { clearNoticeListCache } from '../lib/noticeCache';
@@ -44,12 +45,7 @@ export default function SettingsPage() {
 
   return (
     <main className="main-content page-content">
-      <div className="header simple">
-        <div onClick={() => (window.location.href = '/')}> 
-          <img src="/src/logo.png" alt="남도인 로고" width="48" height="48" />
-        </div>
-        <h2 style={{ marginLeft: 12 }}>설정</h2>
-      </div>
+      <PageHeader title="설정" />
   <div className="container" style={{ display: 'grid', gap: 6 }}>
         {/* 테마 (한 줄) */}
   <div className="card" style={{ height: 70, margin: 0 }}>
