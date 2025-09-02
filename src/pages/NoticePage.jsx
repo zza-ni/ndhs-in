@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import PageHeader from '../components/PageHeader';
+import { CardSkeleton, CardError, LoadMoreSkeleton } from '../components/ui/Skeletons';
+import { TagChip } from '../components/ui/Chip';
 import { useParams } from 'react-router-dom';
 import { getNoticeListCache, isNoticeCacheFresh, setNoticeListCache } from '../lib/noticeCache';
 
@@ -304,20 +306,11 @@ export default function NoticePage() {
         )}
 
         {loading && (
-          <div className="skeleton-list">
-            {[0,1,2].map((i) => (
-              <div key={i} className="skeleton-card">
-                <div className="skeleton-row">
-                  <div className="skeleton skeleton-title" />
-                  <div className="skeleton skeleton-date" />
-                </div>
-                <div className="skeleton skeleton-line" />
-                <div className="skeleton skeleton-line short" />
-              </div>
-            ))}
-          </div>
+          <>
+            {[0,1,2].map((i) => (<CardSkeleton key={i} withTitle lines={2} />))}
+          </>
         )}
-        {error && <p style={{ color: 'tomato' }}>{error}</p>}
+        <CardError message={error} />
         {!loading && !error && items.length === 0 && postId && (
           <div className="empty-state">
             해당 공지를 찾을 수 없습니다.
@@ -342,7 +335,7 @@ export default function NoticePage() {
                     aria-expanded={isOpen}
                     aria-controls={panelId}
                   >
-                    <span className="accordion-title">{title}</span>
+                    <span className="accordion-title">{it.tag ? (<><TagChip style={{ marginRight: 6 }}>{it.tag}</TagChip>{' '}</>) : null}{title}</span>
                     <span className="accordion-date">{dateStr}</span>
                     <span className="accordion-icon" aria-hidden>▾</span>
                   </button>
@@ -363,12 +356,7 @@ export default function NoticePage() {
         {!postId && (
           <>
             <div ref={sentinelRef} style={{ height: 1 }} />
-            {loadingMore && (
-              <div className="skeleton-list more">
-                <div className="skeleton skeleton-line" />
-                <div className="skeleton skeleton-line short" />
-              </div>
-            )}
+            {loadingMore && (<LoadMoreSkeleton />)}
           </>
         )}
       </div>

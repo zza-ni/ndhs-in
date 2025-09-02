@@ -15,3 +15,12 @@ export function CardError({ message }) {
   if (!message) return null;
   return <p className="card-error">{message}</p>;
 }
+
+export function LoadMoreSkeleton({ style }) {
+  return (
+    <div className="skeleton-list more" style={style}>
+      <div className="skeleton skeleton-line" />
+      <div className="skeleton skeleton-line short" />
+    </div>
+  );
+}

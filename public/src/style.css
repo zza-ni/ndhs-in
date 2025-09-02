@@ -249,11 +249,33 @@ body {
   word-break: keep-all;
   font-weight: 600;
 }
+.card-text.preline { white-space: pre-line; }
 
 .card-error {
   color: tomato;
   padding: 0 16px 16px 16px;
 }
+
+/* Board write form extracted styles */
+.board-write { margin-bottom: 12px; }
+.board-write-body { display: grid; gap: 10px; }
+.board-write-tags { display: flex; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
+.board-write-meta { display: flex; justify-content: space-between; align-items: center; }
+
+/* Smaller tag style variant already minimal; ensure clickable area */
+.board-write .tag-chip { min-width: 40px; font-size: 12px; border-radius: 16px; border: none; cursor: pointer; }
+.board-write .tag-chip.active { filter: none; }
+
+/* Minimal divider for section separation (used by shared Divider) */
+.divider { height: 10px; }
+
+/* Segmented control wrapper spacing */
+.segmented-wrap { padding: 10px 12px; }
+
+/* Board: actions and comment form */
+.board-actions { display: flex; gap: 8px; margin-top: 8px; }
+.comment-form { display: flex; gap: 8px; margin-top: 8px; align-items: flex-end; }
+.comment-textarea { flex: 1; resize: none; }
 
 /* ---------- Forms: Input / Textarea / Buttons (Modern) ---------- */
 .input,
@@ -737,6 +759,9 @@ body.modal-open .page-content .container {
   gap: 10px;
 }
 
+.equipments { display: flex; gap: 6px; justify-content: space-between; flex-wrap: wrap; }
+.equipment-svg { position: relative; }
+.equipment-time { font-size: 10px; text-align: center; }
 .accordion-item {
   background: var(--white);
   border: 1.5px solid var(--disable-color);

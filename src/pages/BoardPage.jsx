@@ -1,7 +1,7 @@
 import React from 'react';
 import PageHeader from '../components/PageHeader';
 import Divider from '../components/ui/Divider';
-import { CardSkeleton, CardError } from '../components/ui/Skeletons';
+import { CardSkeleton, CardError, LoadMoreSkeleton } from '../components/ui/Skeletons';
 import { TagChip } from '../components/ui/Chip';
 import { useParams } from 'react-router-dom';
 import { getBoardListCache, isBoardCacheFresh, setBoardListCache } from '../lib/boardCache';
@@ -521,7 +521,7 @@ export default function BoardPage() {
       <PageHeader title={activeTab === 'board' ? '게시판' : '공지사항'} />
       <div className="container" ref={scrollRef}>
   <div aria-live="polite" aria-atomic="true" style={{ position: 'absolute', left: -9999 }} ref={liveRegionRef} />
-        <div style={{ padding: '10px 12px' }}>
+  <div className="segmented-wrap">
           <div className="segmented-control" role="tablist" aria-label="콘텐츠 선택" ref={segControlRef} onKeyDown={handleSegKeyDown}>
             <input type="radio" id="seg-notice" name="seg" checked={activeTab === 'notice'} onChange={() => { setActiveTab('notice'); window.history.replaceState({}, '', '/notice'); setLocationPath('/notice'); }} />
             <label htmlFor="seg-notice" role="tab" aria-selected={activeTab === 'notice'} tabIndex={0}>공지사항</label>
@@ -531,21 +531,20 @@ export default function BoardPage() {
           <Divider />
   </div>
   {!urlPostId && activeTab === 'board' && (
-          <form className="card" onSubmit={onSubmit} style={{ marginBottom: 12 }}>
+          <form className="card board-write" onSubmit={onSubmit}>
             <div className="card-header">
               <h3 className="card-title">글쓰기</h3>
               <button className="btn" type="submit" disabled={submitting || !title.trim() || !content.trim()} title="등록">
                 {submitting ? '등록중…' : '등록'}
               </button>
             </div>
-            <div className="card-body" style={{ display: 'grid', gap: 10 }}>
-              <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
+            <div className="card-body board-write-body">
+              <div className="board-write-tags">
                 {TAGS.map((t) => (
                   <button
                     type="button"
                     key={t}
                     className={`tag-chip${tag === t ? ' active' : ''}`}
-                    style={{ minWidth: 40, fontSize: 12, borderRadius: 16, border: 'none', cursor: 'pointer', background: tag === t ? '#e8f5e9' : '#f5f5f5', color: tag === t ? '#219150' : '#666', transition: 'all .15s' }}
                     onClick={() => setTag(t)}
                     aria-pressed={tag === t}
                   >
@@ -568,7 +567,7 @@ export default function BoardPage() {
                 onChange={(e) => { setContent(e.target.value); autoResize(e.target); }}
                 onInput={(e) => autoResize(e.target)}
               />
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div className="board-write-meta">
                 <small className="muted">텍스트만 지원됩니다.</small>
                 <small className="muted">{content.length}/2000</small>
               </div>
@@ -624,7 +623,7 @@ export default function BoardPage() {
                       <div className="notice-content" onClick={onContentClick} dangerouslySetInnerHTML={{ __html: html }} />
                       {activeTab === 'board' && (
                         <>
-                          <div className="board-actions" style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                          <div className="board-actions">
                             <button
                               className="btn"
                               onClick={() => onLike(it)}
@@ -649,7 +648,7 @@ export default function BoardPage() {
           <>
             <div ref={sentinelRef} style={{ height: 1 }} />
             {loadingMore && (
-              <CardSkeleton lines={2} />
+              <LoadMoreSkeleton />
             )}
           </>
         )}
@@ -671,7 +670,7 @@ function BoardCommentBox({ onSubmit }) {
     
   return (
     <form
-      className="comment-box"
+      className="comment-box comment-form"
       onSubmit={async (e) => {
         e.preventDefault();
         if (!text.trim() || busy) return;
@@ -683,10 +682,9 @@ function BoardCommentBox({ onSubmit }) {
           setBusy(false);
         }
       }}
-      style={{ display: 'flex', gap: 8, marginTop: 8, alignItems: 'flex-end' }}
     >
       <textarea
-        className="textarea"
+        className="textarea comment-textarea"
         rows={1}
                 placeholder="댓글을 입력하세요"
         value={text}
@@ -695,7 +693,6 @@ function BoardCommentBox({ onSubmit }) {
           e.target.style.height = 'auto';
           e.target.style.height = Math.min(e.target.scrollHeight, 200) + 'px';
         }}
-        style={{ flex: 1, resize: 'none' }}
       />
       <button className="btn" type="submit" disabled={busy || !text.trim()} title="등록">
         ➤

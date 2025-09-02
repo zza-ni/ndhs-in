@@ -179,7 +179,7 @@ export default function HomePage() {
               <CardError message={menuError} />
             ) : (
               <CardBody role="status" aria-live="polite">
-                <div className="card-text" style={{ whiteSpace: 'pre-line' }}>{menuOfToday?.items || '-'}</div>
+                <div className="card-text preline">{menuOfToday?.items || '-'}</div>
               </CardBody>
             )}
           </Card>
@@ -250,7 +250,7 @@ export default function HomePage() {
               <CardError message={dryerError} />
             ) : (
               <CardBody>
-                <div style={{ display: 'flex', gap: 6, justifyContent: 'space-between', flexWrap: 'wrap' }}>
+                <div className="equipments">
                   {dryers.map((d, idx) => {
                     const status = String(d.equipmentStatusCd || '').toLowerCase();
                     const inUse = status === 'use';
@@ -269,7 +269,7 @@ export default function HomePage() {
                     const statusColor = (inUse || usable) ? '#4caf50' : '#bdbdbd';
                     return (
                       <div key={d.equipmentSeq || idx} className="equipment-item">
-                        <div style={{ position: 'relative', width: size, height: size }} aria-label={`${name} 남은 시간 ${secToMMSS(remaining)}`}>
+                        <div className="equipment-svg" style={{ width: size, height: size }} aria-label={`${name} 남은 시간 ${secToMMSS(remaining)}`}>
                           <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
                             <circle cx={size/2} cy={size/2} r={r} stroke="#e0e0e0" strokeWidth={stroke} fill="none" />
                             <circle
@@ -289,7 +289,7 @@ export default function HomePage() {
                             {equipNumber}
                           </div>
                         </div>
-                        <div style={{ fontSize: 10, textAlign: 'center' }}>{secToMMSS(remaining)}</div>
+                        <div className="equipment-time">{secToMMSS(remaining)}</div>
                       </div>
                     );
                   })}

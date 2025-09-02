@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import PageHeader from '../components/PageHeader';
 import { Card, CardHeader, CardTitle, CardBody } from '../components/ui/Card';
+import Divider from '../components/ui/Divider';
 import { TagChip } from '../components/ui/Chip';
 import { requestPushPermission, tryEnsurePushRegistered } from '../initApp';
 import { clearBoardListCache } from '../lib/boardCache';
@@ -74,7 +75,8 @@ export default function SettingsPage() {
           </CardHeader>
         </Card>
 
-        {/* 알림 설정 (한 줄) */}
+  <Divider />
+  {/* 알림 설정 (한 줄) */}
   <Card style={{ height: 70, margin: 0 }}>
           <CardHeader style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -88,7 +90,8 @@ export default function SettingsPage() {
           </CardHeader>
         </Card>
 
-        {/* 데이터 (한 줄) */}
+  <Divider />
+  {/* 데이터 (한 줄) */}
   <Card style={{ height: 70, margin: 0 }}>
           <CardHeader style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <CardTitle style={{ margin: 0 }}>데이터</CardTitle>
@@ -98,7 +101,8 @@ export default function SettingsPage() {
           </CardHeader>
         </Card>
 
-        {/* 정보 */}
+  <Divider />
+  {/* 정보 */}
         <Card>
           <CardHeader>
             <CardTitle>정보</CardTitle>
