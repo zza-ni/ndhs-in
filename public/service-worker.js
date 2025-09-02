@@ -17,24 +17,40 @@ try {
     firebase.initializeApp(firebaseConfig);
   }
   const messaging = firebase.messaging();
-  // 중복 방지: notification 키가 있는 경우 FCM이 자체 표시하므로 수동 표시하지 않음
+  // 데이터 전용 메시지만 수동 표시(FCM 자동 표시 비활성화)
   messaging.onBackgroundMessage((payload) => {
-    if (payload && payload.notification) return; // auto-displayed by FCM
-    const t = payload?.data?.title;
-    const b = payload?.data?.body;
-    if (!t && !b) return; // 데이터 없음 → 표시 안 함
-  const options = {
-      body: b || '',
-      icon: payload?.data?.icon || '/src/icon-192x192.png',
-      data: { url: payload?.data?.url || '/' },
+    if (!payload || payload.notification) return; // notification payload는 수동 표시 안 함
+    const d = payload.data || {};
+    const title = d.title || '';
+    const body = d.body || '';
+    if (!title && !body) return;
+    const options = {
+      body,
+      icon: d.icon || '/src/icon-192x192.png',
+      badge: d.badge || '/src/icon-192x192.png',
+      tag: d.tag || 'ndhs-bob-global',
+      renotify: d.renotify === 'true' ? true : false,
+      data: { url: d.url || '/' },
     };
-  self.registration.showNotification(t || '알림', options);
+    // 강력 중복 방지: 같은 태그/내용의 알림이 이미 표시 중이면 스킵, 또는 최근 2초 내 동일 메시지 스킵
+    const now = Date.now();
+    const id = `${title}\n${body}\n${options.data.url}`;
+    self.__lastNoti = self.__lastNoti || { id: '', ts: 0 };
+    if (self.__lastNoti.id === id && now - self.__lastNoti.ts < 2000) return;
+    (async () => {
+      try {
+        const existing = await self.registration.getNotifications({ tag: options.tag });
+        if (existing && existing.length > 0) return; // 이미 같은 태그 표시 중이면 스킵
+      } catch {}
+      self.__lastNoti = { id, ts: now };
+      await self.registration.showNotification(title || '알림', options);
+    })();
   });
 } catch (e) {
   // ignore messaging setup failures in SW
 }
 
-const CACHE_NAME = 'ndhs-bob-cache-v2';
+const CACHE_NAME = 'ndhs-bob-cache-v3';
 const CORE_ASSETS = [
   '/',
   '/index.html',
@@ -48,7 +64,7 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(CORE_ASSETS))
-      .then(() => self.skipWaiting())
+  .then(() => self.skipWaiting())
   );
 });
 
@@ -64,6 +80,13 @@ self.addEventListener('activate', (event) => {
       )
     ).then(() => self.clients.claim())
   );
+});
+
+// Allow clients to trigger immediate activation
+self.addEventListener('message', (event) => {
+  if (event?.data === 'SKIP_WAITING' || event?.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener('fetch', (event) => {

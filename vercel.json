@@ -1,5 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    { "source": "/firebase-messaging-sw.js", "destination": "/", "permanent": false }
+  ],
   "rewrites": [
     {
       "source": "/api/(.)",

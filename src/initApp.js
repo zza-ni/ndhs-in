@@ -20,14 +20,34 @@ function registerServiceWorkers() {
   if ('serviceWorker' in navigator) {
     try {
   // Root-scoped SW for PWA control
-  navigator.serviceWorker.register('/service-worker.js');
+  navigator.serviceWorker.register('/service-worker.js').then((reg) => {
+        // force update and activate immediately
+        try { reg.update(); } catch {}
+        if (reg.waiting) reg.waiting.postMessage('SKIP_WAITING');
+        reg.addEventListener('updatefound', () => {
+          const installing = reg.installing;
+          if (!installing) return;
+          installing.addEventListener('statechange', () => {
+            if (installing.state === 'installed' && reg.waiting) {
+              reg.waiting.postMessage('SKIP_WAITING');
+            }
+          });
+        });
+        let reloading = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (reloading) return;
+          reloading = true;
+          location.reload();
+        });
+      });
     } catch {}
-    // Unregister legacy firebase-messaging SW if present
+    // Unregister legacy firebase-messaging SW if present (active/waiting/installing)
     try {
       navigator.serviceWorker.getRegistrations().then((regs) => {
-        regs.forEach((r) => {
-          if (r?.active?.scriptURL?.endsWith('/firebase-messaging-sw.js') || r?.scriptURL?.endsWith('/firebase-messaging-sw.js')) {
-            r.unregister();
+        regs.forEach((reg) => {
+          const urls = [reg?.active?.scriptURL, reg?.waiting?.scriptURL, reg?.installing?.scriptURL].filter(Boolean);
+          if (urls.some((u) => u.endsWith('/firebase-messaging-sw.js'))) {
+            try { reg.unregister(); } catch {}
           }
         });
       });
@@ -51,11 +71,25 @@ async function initFirebase() {
   }
 }
 
+function getDeviceId() {
+  try {
+    let id = localStorage.getItem('deviceId');
+    if (!id) {
+      id = (crypto && crypto.randomUUID) ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36);
+      localStorage.setItem('deviceId', id);
+    }
+    return id;
+  } catch { return undefined; }
+}
+
 function saveTokenToServer(token) {
+  const deviceId = getDeviceId();
+  const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+  const platform = typeof navigator !== 'undefined' ? navigator.platform : '';
   return fetch('/api/saveToken', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ token }),
+    body: JSON.stringify({ token, deviceId, ua, platform }),
   }).then((r) => r.json());
 }
 

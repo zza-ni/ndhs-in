@@ -39,9 +39,20 @@ export default async function handler(req, res) {
     // 4. 메시지 페이로드 작성 및 청크 발송(최대 500개)
     const chunkSize = 500;
     let success = 0, failure = 0; const invalidTokens = [];
+    const openUrl = (data && data.url) || '/';
     for (let i = 0; i < tokens.length; i += chunkSize) {
       const slice = tokens.slice(i, i + chunkSize);
-      const message = { data: { title, body, ...(data || {}) }, tokens: slice };
+      const message = {
+        data: {
+          title,
+          body,
+          url: openUrl,
+          icon: (data && data.icon) || '/src/icon-192x192.png',
+          badge: (data && data.badge) || '/src/icon-192x192.png',
+          ...(data || {}),
+        },
+        tokens: slice,
+      };
       const response = await admin.messaging().sendEachForMulticast(message);
       success += response.successCount || 0;
       failure += response.failureCount || 0;
