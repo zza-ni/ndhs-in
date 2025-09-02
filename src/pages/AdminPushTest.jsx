@@ -1,4 +1,5 @@
 import React from 'react';
+import form from '../components/ui/Form.module.css';
 import PageHeader from '../components/PageHeader';
 import { Card, CardHeader, CardTitle, CardBody } from '../components/ui/Card';
 import Divider from '../components/ui/Divider';
@@ -61,7 +62,7 @@ export default function AdminPushTest() {
             <div>
               <span className="muted">iOS는 웹푸시, Android/데스크탑은 FCM.</span>
             </div>
-            <button className="btn" onClick={onSend} disabled={sending || !password || !title || !body}>
+            <button className={form.btn} onClick={onSend} disabled={sending || !password || !title || !body}>
               {sending ? '전송 중…' : '전송'}
             </button>
           </CardBody>

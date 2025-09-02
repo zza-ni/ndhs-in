@@ -1,6 +1,18 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/.js": {
+      "includeFiles": "lib/**"
+    }
+  },
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "(.*)", "destination": "/index.html" }
+    {
+      "source": "/api/(.)",
+      "destination": "/api/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ]
 }

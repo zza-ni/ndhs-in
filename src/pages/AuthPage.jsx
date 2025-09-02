@@ -1,4 +1,6 @@
 import React from 'react';
+import PageHeader from '../components/PageHeader';
+import form from '../components/ui/Form.module.css';
 
 export default function AuthPage() {
   const API_ENDPOINT = import.meta.env.VITE_API_ENDPOINT;
@@ -54,12 +56,7 @@ export default function AuthPage() {
 
   return (
     <main className="main-content page-content">
-      <div className="header simple">
-        <div onClick={() => (window.location.href = '/')}> 
-          <img src="/src/logo.png" alt="남도인 로고" width="48" height="48" />
-        </div>
-        <h2 style={{ marginLeft: 12 }}>로그인</h2>
-      </div>
+      <PageHeader title="로그인" />
       <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', maxHeight: 'calc(70vh)', padding: 16 }}>
         <div className="card" style={{ maxWidth: 480, width: '100%' }}>
           <div className="card-header">
@@ -71,7 +68,7 @@ export default function AuthPage() {
                 <path d="M12 12c2.8 0 5-2.2 5-5s-2.2-5-5-5-5 2.2-5 5 2.2 5 5 5Zm0 2c-4 0-8 2-8 6v1h16v-1c0-4-4-6-8-6Z" fill="currentColor"/>
               </svg>
               <input
-                className="input"
+                className={form.input}
                 style={{ width: '100%', paddingLeft: 36 }}
                 placeholder="아이디"
                 aria-label="아이디"
@@ -86,7 +83,7 @@ export default function AuthPage() {
                 <path d="M6 10V8a6 6 0 1 1 12 0v2h1a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V11a1 1 0 0 1 1-1h1Zm2 0h8V8a4 4 0 1 0-8 0v2Z" fill="currentColor"/>
               </svg>
               <input
-                className="input"
+                className={form.input}
                 style={{ width: '100%', paddingLeft: 36 }}
                 type="password"
                 placeholder="비밀번호"
@@ -136,7 +133,7 @@ export default function AuthPage() {
               </div>
             )}
             <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <button className="btn" type="submit" disabled={!canSubmit} aria-disabled={!canSubmit}>
+              <button className={form.btn} type="submit" disabled={!canSubmit} aria-disabled={!canSubmit}>
                 {loading ? '로그인 중…' : '로그인'}
               </button>
             </div>

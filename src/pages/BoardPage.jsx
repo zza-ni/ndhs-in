@@ -2,6 +2,10 @@ import React from 'react';
 import PageHeader from '../components/PageHeader';
 import Divider from '../components/ui/Divider';
 import { CardSkeleton, CardError, LoadMoreSkeleton } from '../components/ui/Skeletons';
+import styles from './BoardPage.module.css';
+import acc from '../components/ui/Accordion.module.css';
+import seg from '../components/ui/SegmentedControl.module.css';
+import form from '../components/ui/Form.module.css';
 import { TagChip } from '../components/ui/Chip';
 import { useParams } from 'react-router-dom';
 import { getBoardListCache, isBoardCacheFresh, setBoardListCache } from '../lib/boardCache';
@@ -521,25 +525,25 @@ export default function BoardPage() {
       <PageHeader title={activeTab === 'board' ? '게시판' : '공지사항'} />
       <div className="container" ref={scrollRef}>
   <div aria-live="polite" aria-atomic="true" style={{ position: 'absolute', left: -9999 }} ref={liveRegionRef} />
-  <div className="segmented-wrap">
-          <div className="segmented-control" role="tablist" aria-label="콘텐츠 선택" ref={segControlRef} onKeyDown={handleSegKeyDown}>
-            <input type="radio" id="seg-notice" name="seg" checked={activeTab === 'notice'} onChange={() => { setActiveTab('notice'); window.history.replaceState({}, '', '/notice'); setLocationPath('/notice'); }} />
-            <label htmlFor="seg-notice" role="tab" aria-selected={activeTab === 'notice'} tabIndex={0}>공지사항</label>
-            <input type="radio" id="seg-board" name="seg" checked={activeTab === 'board'} onChange={() => { setActiveTab('board'); window.history.replaceState({}, '', '/board'); setLocationPath('/board'); }} />
-            <label htmlFor="seg-board" role="tab" aria-selected={activeTab === 'board'} tabIndex={0}>게시판</label>
+  <div className={styles.segmentedWrap}>
+          <div className={seg.root} role="tablist" aria-label="콘텐츠 선택" ref={segControlRef} onKeyDown={handleSegKeyDown}>
+            <input className={seg.radio} type="radio" id="seg-notice" name="seg" checked={activeTab === 'notice'} onChange={() => { setActiveTab('notice'); window.history.replaceState({}, '', '/notice'); setLocationPath('/notice'); }} />
+            <label className={seg.label} htmlFor="seg-notice" role="tab" aria-selected={activeTab === 'notice'} tabIndex={0}>공지사항</label>
+            <input className={seg.radio} type="radio" id="seg-board" name="seg" checked={activeTab === 'board'} onChange={() => { setActiveTab('board'); window.history.replaceState({}, '', '/board'); setLocationPath('/board'); }} />
+            <label className={seg.label} htmlFor="seg-board" role="tab" aria-selected={activeTab === 'board'} tabIndex={0}>게시판</label>
           </div>
           <Divider />
   </div>
   {!urlPostId && activeTab === 'board' && (
-          <form className="card board-write" onSubmit={onSubmit}>
+          <form className={`card ${styles.boardWrite}`} onSubmit={onSubmit}>
             <div className="card-header">
               <h3 className="card-title">글쓰기</h3>
-              <button className="btn" type="submit" disabled={submitting || !title.trim() || !content.trim()} title="등록">
+              <button className={form.btn} type="submit" disabled={submitting || !title.trim() || !content.trim()} title="등록">
                 {submitting ? '등록중…' : '등록'}
               </button>
             </div>
-            <div className="card-body board-write-body">
-              <div className="board-write-tags">
+            <div className={`card-body ${styles.boardWriteBody}`}>
+              <div className={styles.boardWriteTags}>
                 {TAGS.map((t) => (
                   <button
                     type="button"
@@ -553,21 +557,21 @@ export default function BoardPage() {
                 ))}
               </div>
               <input
-                className="input"
+                className={form.input}
                 placeholder="제목을 입력하세요"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 maxLength={80}
               />
               <textarea
-                className="textarea"
+                className={form.textarea}
                 placeholder="내용을 입력하세요"
                 rows={3}
                 value={content}
                 onChange={(e) => { setContent(e.target.value); autoResize(e.target); }}
                 onInput={(e) => autoResize(e.target)}
               />
-              <div className="board-write-meta">
+              <div className={styles.boardWriteMeta}>
                 <small className="muted">텍스트만 지원됩니다.</small>
                 <small className="muted">{content.length}/2000</small>
               </div>
@@ -594,7 +598,7 @@ export default function BoardPage() {
           <div className="empty-state">해당 게시글을 찾을 수 없습니다.</div>
         )}
         {!loading && !(activeTab === 'board' ? error : noticeError) && (activeTab === 'board' ? items.length > 0 : noticeItems.length > 0) && (
-          <div className="accordion">
+          <div className={acc.accordion}>
             {(activeTab === 'board' ? items : noticeItems)
               .filter((it) => selectedTag === '전체' || it.tag === selectedTag)
               .map((it, idx) => {
@@ -605,27 +609,27 @@ export default function BoardPage() {
                 const html = enhanceHtml(it.content);
                 const panelId = `board-panel-${id}`;
                 return (
-                  <div key={id} id={`board-accordion-item-${id}`} className={`accordion-item${urlPostId ? ' open' : isOpen ? ' open' : ''}`}>
+                  <div key={id} id={`board-accordion-item-${id}`} className={`${acc.item} ${urlPostId ? acc.open : isOpen ? acc.open : ''}`}>
                     <button
-                      className="accordion-header"
+                      className={acc.header}
                       onClick={() => (urlPostId ? null : setOpenId((cur) => (cur === id ? null : id)))}
                       aria-expanded={isOpen}
                       aria-controls={panelId}
                     >
-                      <span className="accordion-title">
+                      <span className={acc.title}>
                         {it.tag ? (<><TagChip style={{ marginRight: 6 }}>{it.tag}</TagChip>{' '}</>) : null}
                         {title}
                       </span>
-                      <span className="accordion-date">{dateStr}</span>
-                      <span className="accordion-icon" aria-hidden>▾</span>
+                      <span className={acc.date}>{dateStr}</span>
+                      <span className={acc.icon} aria-hidden>▾</span>
                     </button>
-                    <div className="accordion-panel" id={panelId} role="region" aria-label={`${title} 내용`} aria-hidden={urlPostId ? false : !isOpen}>
-                      <div className="notice-content" onClick={onContentClick} dangerouslySetInnerHTML={{ __html: html }} />
+                    <div className={`accordion-panel ${acc.panel}`} id={panelId} role="region" aria-label={`${title} 내용`} aria-hidden={urlPostId ? false : !isOpen}>
+                      <div className={acc.noticeContent} onClick={onContentClick} dangerouslySetInnerHTML={{ __html: html }} />
                       {activeTab === 'board' && (
                         <>
-                          <div className="board-actions">
+                          <div className={styles.boardActions}>
                             <button
-                              className="btn"
+                              className={form.btn}
                               onClick={() => onLike(it)}
                               aria-label="추천"
                               aria-pressed={likingId === (it.id || it.post_id)}
@@ -670,7 +674,7 @@ function BoardCommentBox({ onSubmit }) {
     
   return (
     <form
-      className="comment-box comment-form"
+      className={`comment-box ${styles.commentForm}`}
       onSubmit={async (e) => {
         e.preventDefault();
         if (!text.trim() || busy) return;
@@ -684,7 +688,7 @@ function BoardCommentBox({ onSubmit }) {
       }}
     >
       <textarea
-        className="textarea comment-textarea"
+        className={`${form.textarea} ${styles.commentTextarea}`}
         rows={1}
                 placeholder="댓글을 입력하세요"
         value={text}
@@ -694,7 +698,7 @@ function BoardCommentBox({ onSubmit }) {
           e.target.style.height = Math.min(e.target.scrollHeight, 200) + 'px';
         }}
       />
-      <button className="btn" type="submit" disabled={busy || !text.trim()} title="등록">
+  <button className={form.btn} type="submit" disabled={busy || !text.trim()} title="등록">
         ➤
       </button>
     </form>

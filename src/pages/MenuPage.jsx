@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import seg from '../components/ui/SegmentedControl.module.css';
 
 
 const days = ['월', '화', '수', '목', '금', '토', '일'];
@@ -61,11 +62,11 @@ function useQueryDate() {
 
 function SegmentedTabs({ selectedIndex, onChange }) {
   return (
-    <div className="segmented-control">
+  <div className={seg.root}>
       {days.map((label, i) => (
         <React.Fragment key={label}>
-          <input type="radio" id={`tab${i + 1}`} name="tab" checked={selectedIndex === i} onChange={() => onChange(i)} />
-          <label htmlFor={`tab${i + 1}`}>{label}</label>
+      <input className={seg.radio} type="radio" id={`tab${i + 1}`} name="tab" checked={selectedIndex === i} onChange={() => onChange(i)} />
+      <label className={seg.label} htmlFor={`tab${i + 1}`}>{label}</label>
         </React.Fragment>
       ))}
     </div>

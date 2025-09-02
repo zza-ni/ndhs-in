@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import PageHeader from '../components/PageHeader';
 import { Card, CardHeader, CardTitle, CardBody } from '../components/ui/Card';
 import Divider from '../components/ui/Divider';
+import seg from '../components/ui/SegmentedControl.module.css';
+import form from '../components/ui/Form.module.css';
 import { TagChip } from '../components/ui/Chip';
 import { requestPushPermission, tryEnsurePushRegistered } from '../initApp';
 import { clearBoardListCache } from '../lib/boardCache';
@@ -64,13 +66,13 @@ export default function SettingsPage() {
   <Card style={{ height: 70, margin: 0 }}>
           <CardHeader style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <CardTitle style={{ margin: 0 }}>테마</CardTitle>
-            <div className="segmented-control" role="tablist" aria-label="테마 선택" style={{ margin: 0, width: '50%' }}>
-              <input type="radio" id="theme-light" name="theme" checked={theme === 'light'} onChange={() => setTheme('light')} />
-              <label htmlFor="theme-light" role="tab" aria-selected={theme === 'light'} tabIndex={0}>라이트</label>
-              <input type="radio" id="theme-dark" name="theme" checked={theme === 'dark'} onChange={() => setTheme('dark')} />
-              <label htmlFor="theme-dark" role="tab" aria-selected={theme === 'dark'} tabIndex={0}>다크</label>
-              <input type="radio" id="theme-system" name="theme" checked={theme === 'system'} onChange={() => setTheme('system')} />
-              <label htmlFor="theme-system" role="tab" aria-selected={theme === 'system'} tabIndex={0}>시스템</label>
+            <div className={seg.root} role="tablist" aria-label="테마 선택" style={{ margin: 0, width: '50%' }}>
+              <input className={seg.radio} type="radio" id="theme-light" name="theme" checked={theme === 'light'} onChange={() => setTheme('light')} />
+              <label className={seg.label} htmlFor="theme-light" role="tab" aria-selected={theme === 'light'} tabIndex={0}>라이트</label>
+              <input className={seg.radio} type="radio" id="theme-dark" name="theme" checked={theme === 'dark'} onChange={() => setTheme('dark')} />
+              <label className={seg.label} htmlFor="theme-dark" role="tab" aria-selected={theme === 'dark'} tabIndex={0}>다크</label>
+              <input className={seg.radio} type="radio" id="theme-system" name="theme" checked={theme === 'system'} onChange={() => setTheme('system')} />
+              <label className={seg.label} htmlFor="theme-system" role="tab" aria-selected={theme === 'system'} tabIndex={0}>시스템</label>
             </div>
           </CardHeader>
         </Card>
@@ -84,8 +86,8 @@ export default function SettingsPage() {
               <TagChip style={{ cursor: 'default' }}>{pushStatus}</TagChip>
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <button className="btn" onClick={onEnablePush} disabled={pushStatus === '등록됨'}>푸시 알림 허용</button>
-              <button className="btn" onClick={onRetryRegister}>등록 재시도</button>
+              <button className={form.btn} onClick={onEnablePush} disabled={pushStatus === '등록됨'}>푸시 알림 허용</button>
+              <button className={form.btn} onClick={onRetryRegister}>등록 재시도</button>
             </div>
           </CardHeader>
         </Card>
@@ -96,7 +98,7 @@ export default function SettingsPage() {
           <CardHeader style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <CardTitle style={{ margin: 0 }}>데이터</CardTitle>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <button className="btn" onClick={onClearCaches}>캐시 비우기</button>
+              <button className={form.btn} onClick={onClearCaches}>캐시 비우기</button>
             </div>
           </CardHeader>
         </Card>

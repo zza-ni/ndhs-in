@@ -1,0 +1,26 @@
+.header {
+  margin: 14px auto;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: var(--disable-color);
+  box-shadow: 0 6px 18px var(--shadow-deep);
+  border-radius: 14px;
+  min-height: 56px;
+  max-height: 84px;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  width: 100%;
+}
+
+.header:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px var(--shadow-overlay);
+}
+
+.header img { height: 40px; width: auto; display: block; border-radius: 8px; object-fit: contain; }
+
+.title { margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--main-font-color); line-height: 1; }

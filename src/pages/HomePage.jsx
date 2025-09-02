@@ -5,6 +5,7 @@ import { CardSkeleton, CardError } from '../components/ui/Skeletons';
 import { Link } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
 import { getNoticeListCache, isNoticeCacheFresh, setNoticeListCache } from '../lib/noticeCache';
+import styles from './HomePage.module.css';
 
 const days = ['월', '화', '수', '목', '금', '토', '일'];
 const tz = 'Asia/Seoul';
@@ -179,7 +180,7 @@ export default function HomePage() {
               <CardError message={menuError} />
             ) : (
               <CardBody role="status" aria-live="polite">
-                <div className="card-text preline">{menuOfToday?.items || '-'}</div>
+                <div className={`card-text ${styles.preline}`}>{menuOfToday?.items || '-'}</div>
               </CardBody>
             )}
           </Card>
@@ -250,7 +251,7 @@ export default function HomePage() {
               <CardError message={dryerError} />
             ) : (
               <CardBody>
-                <div className="equipments">
+                <div className={styles.equipments}>
                   {dryers.map((d, idx) => {
                     const status = String(d.equipmentStatusCd || '').toLowerCase();
                     const inUse = status === 'use';
@@ -269,7 +270,7 @@ export default function HomePage() {
                     const statusColor = (inUse || usable) ? '#4caf50' : '#bdbdbd';
                     return (
                       <div key={d.equipmentSeq || idx} className="equipment-item">
-                        <div className="equipment-svg" style={{ width: size, height: size }} aria-label={`${name} 남은 시간 ${secToMMSS(remaining)}`}>
+                        <div className={styles.equipmentSvg} style={{ width: size, height: size }} aria-label={`${name} 남은 시간 ${secToMMSS(remaining)}`}>
                           <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
                             <circle cx={size/2} cy={size/2} r={r} stroke="#e0e0e0" strokeWidth={stroke} fill="none" />
                             <circle
@@ -289,7 +290,7 @@ export default function HomePage() {
                             {equipNumber}
                           </div>
                         </div>
-                        <div className="equipment-time">{secToMMSS(remaining)}</div>
+                        <div className={styles.equipmentTime}>{secToMMSS(remaining)}</div>
                       </div>
                     );
                   })}

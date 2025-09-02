@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, NavLink, useLocation } from 'react-router-dom';
+import navStyles from './components/BottomNav.module.css';
 import MenuPage from './pages/MenuPage';
 import HomePage from './pages/HomePage';
 import OvernightPage from './pages/OvernightPage';
@@ -103,14 +104,14 @@ function BottomNav() {
     },
   ];
   return (
-    <nav className="bottom-nav">
+    <nav className={navStyles.nav}>
       {items.map((it) => {
         if (it.to === '/board') {
           const active = location.pathname.startsWith('/board') || location.pathname.startsWith('/notice');
           return (
-            <NavLink key={it.to} to="/notice" className={`nav-item${active ? ' active' : ''}`} onClick={() => { if ('vibrate' in navigator) navigator.vibrate(50); }} aria-label={it.label}>
-              {it.icon}
-              <span className="nav-label">{it.label}</span>
+            <NavLink key={it.to} to="/notice" className={`${navStyles.item} ${active ? navStyles.active : ''}`} onClick={() => { if ('vibrate' in navigator) navigator.vibrate(50); }} aria-label={it.label}>
+              {React.cloneElement(it.icon, { className: navStyles.icon })}
+              <span className={navStyles.label}>{it.label}</span>
             </NavLink>
           );
         }
@@ -118,14 +119,14 @@ function BottomNav() {
           <NavLink
             key={it.to}
             to={it.to}
-            className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
+            className={({ isActive }) => `${navStyles.item} ${isActive ? navStyles.active : ''}`}
             onClick={() => {
               if ('vibrate' in navigator) navigator.vibrate(50);
             }}
             aria-label={it.label}
           >
-            {it.icon}
-            <span className="nav-label">{it.label}</span>
+            {React.cloneElement(it.icon, { className: navStyles.icon })}
+            <span className={navStyles.label}>{it.label}</span>
           </NavLink>
         );
       })}

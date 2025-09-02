@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import PageHeader from '../components/PageHeader';
 import { CardSkeleton, CardError, LoadMoreSkeleton } from '../components/ui/Skeletons';
 import { TagChip } from '../components/ui/Chip';
+import styles from './NoticePage.module.css';
+import acc from '../components/ui/Accordion.module.css';
 import { useParams } from 'react-router-dom';
 import { getNoticeListCache, isNoticeCacheFresh, setNoticeListCache } from '../lib/noticeCache';
 
@@ -291,7 +293,7 @@ export default function NoticePage() {
   <div className="container" ref={scrollRef}>
         {/* 태그 필터 탭: 단일 글(postId)에서는 숨김 */}
         {!loading && !postId && (
-          <div className="tags-bar">
+          <div className={styles.tagsBar}>
             {['전체', ...Array.from(new Set(items.map((i) => i.tag).filter(Boolean)))]
               .map((tag) => (
                 <button
@@ -317,7 +319,7 @@ export default function NoticePage() {
           </div>
         )}
         {!loading && !error && items.length > 0 && (
-          <div className="accordion">
+          <div className={acc.accordion}>
             {items
               .filter((it) => selectedTag === '전체' || it.tag === selectedTag)
               .map((it, idx) => {
@@ -328,25 +330,25 @@ export default function NoticePage() {
               const html = enhanceHtml(it.content);
               const panelId = `notice-panel-${id}`;
               return (
-                <div key={id} id={`accordion-item-${id}`} className={`accordion-item${postId ? ' open' : isOpen ? ' open' : ''}`}>
+                <div key={id} id={`accordion-item-${id}`} className={`${acc.item} ${postId ? acc.open : isOpen ? acc.open : ''}`}>
                   <button
-                    className="accordion-header"
+                    className={acc.header}
                     onClick={() => (postId ? null : toggle(id))}
                     aria-expanded={isOpen}
                     aria-controls={panelId}
                   >
-                    <span className="accordion-title">{it.tag ? (<><TagChip style={{ marginRight: 6 }}>{it.tag}</TagChip>{' '}</>) : null}{title}</span>
-                    <span className="accordion-date">{dateStr}</span>
-                    <span className="accordion-icon" aria-hidden>▾</span>
+                    <span className={acc.title}>{it.tag ? (<><TagChip style={{ marginRight: 6 }}>{it.tag}</TagChip>{' '}</>) : null}{title}</span>
+                    <span className={acc.date}>{dateStr}</span>
+                    <span className={acc.icon} aria-hidden>\u25be</span>
                   </button>
                   <div
-                    className="accordion-panel"
+                    className={`accordion-panel ${acc.panel}`}
                     id={panelId}
                     role="region"
                     aria-label={`${title} 내용`}
                     aria-hidden={postId ? false : !isOpen}
                   >
-                    <div className="notice-content" onClick={onContentClick} dangerouslySetInnerHTML={{ __html: html }} />
+                    <div className={acc.noticeContent} onClick={onContentClick} dangerouslySetInnerHTML={{ __html: html }} />
                   </div>
                 </div>
               );

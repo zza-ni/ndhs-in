@@ -1,6 +1,7 @@
 import React from 'react';
 import PageHeader from '../components/PageHeader';
 import { Card, CardHeader, CardTitle, CardBody } from '../components/ui/Card';
+import form from '../components/ui/Form.module.css';
 
 export default function OvernightPage() {
   // 오늘 날짜 yyyy-mm-dd
@@ -31,7 +32,6 @@ export default function OvernightPage() {
     }
   }, [returnDate, tomorrow]);
 
-
   return (
     <main className="main-content page-content">
   <PageHeader title="외박 신청" />
@@ -44,7 +44,7 @@ export default function OvernightPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <label style={{ fontWeight: 700, minWidth: 60, marginBottom: 0 }}>복귀 예정일</label>
               <input
-                className="input"
+                className={form.input}
                 style={{ flex: 1 }}
                 type="date"
                 value={returnDate}
@@ -58,9 +58,9 @@ export default function OvernightPage() {
               </div>
             )}
             <label style={{ fontWeight: 700 }}>사유</label>
-            <textarea className="textarea" rows={4} placeholder="간단한 사유를 입력하세요" />
+            <textarea className={form.textarea} rows={4} placeholder="간단한 사유를 입력하세요" />
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <button className="btn" disabled={!!dateError} aria-disabled={!!dateError} title={dateError || undefined}>신청</button>
+              <button className={form.btn} disabled={!!dateError} aria-disabled={!!dateError} title={dateError || undefined}>신청</button>
             </div>
           </CardBody>
         </Card>

@@ -1,0 +1,111 @@
+.accordion {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.item {
+  background: var(--white);
+  border: 1.5px solid var(--disable-color);
+  border-radius: 12px;
+  box-shadow: 0 2px 12px var(--shadow);
+  overflow: hidden;
+}
+
+.header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 14px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  color: var(--main-font-color);
+}
+
+.title {
+  font-weight: 700;
+  text-align: left;
+  flex: 1;
+  font-size: 0.9rem;
+}
+
+.date {
+  font-size: 0.9em;
+  color: var(--date-font-color);
+  margin-left: 10px;
+  white-space: nowrap;
+}
+
+.icon {
+  transition: transform 0.2s ease;
+}
+
+.open .icon {
+  transform: rotate(180deg);
+}
+
+.panel {
+  border-top: 1px solid var(--disable-color);
+  background: var(--white);
+  padding: 0 14px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.25s ease, padding 0.2s ease;
+}
+
+.open .panel {
+  padding: 12px 14px 16px 14px;
+  max-height: 1200px;
+}
+
+.noticeContent img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 1px 6px var(--shadow);
+  display: block;
+  margin: 6px auto;
+  background: #f2f2f2;
+}
+
+.noticeContent a {
+  color: var(--focus-color);
+  text-decoration: underline;
+}
+
+/* Ensure inline black in fetched content is overridden */
+.noticeContent,
+.noticeContent * {
+  color: var(--main-font-color) !important;
+}
+
+.noticeContent a {
+  color: var(--focus-color) !important;
+  text-decoration: underline;
+}
+
+/* Dark theme overrides */
+:global(:root[data-theme="dark"]) .item {
+  background: #0f2f21;
+  border-color: #1f5a3b;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+:global(:root[data-theme="dark"]) .header {
+  color: #e6ffe6;
+}
+
+:global(:root[data-theme="dark"]) .panel {
+  background: #0e2a1d;
+}
+
+:global(:root[data-theme="dark"]) .noticeContent a {
+  color: #9fe6b0 !important;
+}
+
+:global(:root[data-theme="dark"]) .noticeContent img {
+  background: #0f2f21;
+}

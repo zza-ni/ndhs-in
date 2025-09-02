@@ -1,11 +1,12 @@
 import React from 'react';
+import styles from './Skeletons.module.css';
 
 export function CardSkeleton({ lines = 2, withTitle = true, style }) {
   return (
-    <div className="skeleton-list" style={{ margin: 0, ...style }}>
-      {withTitle && <div className="skeleton skeleton-title" />}
+    <div className={styles.skeletonList} style={{ margin: 0, ...style }}>
+      {withTitle && <div className={`${styles.sk} ${styles.title}`} />}
       {Array.from({ length: lines }).map((_, i) => (
-        <div key={i} className={`skeleton skeleton-line${i === lines - 1 ? ' short' : ''}`} />
+        <div key={i} className={`${styles.sk} ${styles.line} ${i === lines - 1 ? styles.short : ''}`} />
       ))}
     </div>
   );
@@ -18,9 +19,9 @@ export function CardError({ message }) {
 
 export function LoadMoreSkeleton({ style }) {
   return (
-    <div className="skeleton-list more" style={style}>
-      <div className="skeleton skeleton-line" />
-      <div className="skeleton skeleton-line short" />
+    <div className={`${styles.skeletonList} ${styles.more}`} style={style}>
+      <div className={`${styles.sk} ${styles.line}`} />
+      <div className={`${styles.sk} ${styles.line} ${styles.short}`} />
     </div>
   );
 }

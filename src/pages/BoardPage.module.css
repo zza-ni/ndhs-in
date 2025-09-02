@@ -1,0 +1,10 @@
+.segmentedWrap { padding: 10px 12px; }
+.boardWrite { margin-bottom: 12px; }
+.boardWriteBody { display: grid; gap: 10px; }
+.boardWriteTags { display: flex; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
+.boardWriteMeta { display: flex; justify-content: space-between; align-items: center; }
+.boardActions { display: flex; gap: 8px; margin-top: 8px; }
+.commentForm { display: flex; gap: 8px; margin-top: 8px; align-items: flex-end; }
+.commentTextarea { flex: 1; resize: none; }
+/* TODO: Move .segmented-control styles from global stylesheet into a local module
+	and update JSX to use module classes for full isolation. */
