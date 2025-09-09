@@ -92,6 +92,29 @@ self.addEventListener('message', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
+
+  // Always network for all api.ndhs.in requests (no cache)
+  if (/^https?:\/\/api\.ndhs\.in\//.test(event.request.url)) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  // Cache-first for cdn.ndhs.in (always cache)
+  if (/^https?:\/\/cdn\.ndhs\.in\//.test(event.request.url)) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached;
+        return fetch(event.request)
+          .then((response) => {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+            return response;
+          });
+      })
+    );
+    return;
+  }
+
   if (event.request.mode === 'navigate') {
     // Network-first for SPA navigations; fallback to cached index.html
     event.respondWith(
@@ -121,8 +144,6 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// Generic Web Push handler (for iOS Safari PWA and other browsers using the W3C Push API)
-// Web Push 비활성화: 일반 push 이벤트 핸들러 제거됨 (FCM messaging.onBackgroundMessage만 사용)
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
