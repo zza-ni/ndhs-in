@@ -91,57 +91,31 @@ self.addEventListener('message', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+  const url = new URL(event.request.url);
 
-
-  // Always network for all api.ndhs.in requests (no cache)
-  if (/^https?:\/\/api\.ndhs\.in\//.test(event.request.url)) {
+  // 1) api.ndhs.in → 항상 네트워크 (캐시 저장/사용 X)
+  if (url.hostname === 'api.ndhs.in') {
     event.respondWith(fetch(event.request));
     return;
   }
 
-  // Cache-first for cdn.ndhs.in (always cache)
-  if (/^https?:\/\/cdn\.ndhs\.in\//.test(event.request.url)) {
+  // 2) cdn.ndhs.in 또는 /data → 캐시 우선 (없으면 네트워크 후 캐시에 저장)
+  if (url.hostname === 'cdn.ndhs.in' || url.pathname.startsWith('/data/')) {
     event.respondWith(
       caches.match(event.request).then((cached) => {
         if (cached) return cached;
-        return fetch(event.request)
-          .then((response) => {
-            const copy = response.clone();
+        return fetch(event.request).then((resp) => {
+          const copy = resp.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-            return response;
-          });
+          return resp;
+        });
       })
     );
     return;
   }
 
-  if (event.request.mode === 'navigate') {
-    // Network-first for SPA navigations; fallback to cached index.html
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-          return response;
-        })
-        .catch(() => caches.match('/index.html'))
-    );
-    return;
-  }
-
-  // Cache-first for other GET requests with network fallback
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request)
-        .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-          return response;
-        })
-        .catch(() => caches.match('/index.html'));
-    })
-  );
+  // 3) 그 외 → 캐시 미사용 (항상 네트워크)
+  event.respondWith(fetch(event.request));
 });
 
 
