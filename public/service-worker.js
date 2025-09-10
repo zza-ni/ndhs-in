@@ -93,14 +93,14 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
 
-  // 1) api.ndhs.in → 항상 네트워크 (캐시 저장/사용 X)
-  if (url.hostname === 'api.ndhs.in') {
+  // 1) api.ndhs.app → 항상 네트워크 (캐시 저장/사용 X)
+  if (url.hostname === 'api.ndhs.app') {
     event.respondWith(fetch(event.request));
     return;
   }
 
-  // 2) cdn.ndhs.in 또는 /data → 캐시 우선 (없으면 네트워크 후 캐시에 저장)
-  if (url.hostname === 'cdn.ndhs.in' || url.pathname.startsWith('/data/')) {
+  // 2) cdn.ndhs.app 또는 /data → 캐시 우선 (없으면 네트워크 후 캐시에 저장)
+  if (url.hostname === 'cdn.ndhs.app' || url.pathname.startsWith('/data/')) {
     event.respondWith(
       caches.match(event.request).then((cached) => {
         if (cached) return cached;

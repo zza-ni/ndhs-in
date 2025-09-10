@@ -21,6 +21,7 @@ export default function NoticePage() {
   const [lightboxSrc, setLightboxSrc] = useState('');
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const scrollRef = React.useRef(null);
+  const [copiedId, setCopiedId] = useState(null);
 
   const API_ENDPOINT = import.meta.env.VITE_API_ENDPOINT;
   const NOTICE_API = `${API_ENDPOINT.replace(/\/$/, '')}/boards/notice`;
@@ -58,7 +59,7 @@ export default function NoticePage() {
     return `${yy}/${m}/${d} ${hh}:${mm}`;
   };
 
-  const enhanceHtml = (html) => {
+  const enhanceHtml = (html, deferImages = true) => {
     if (!html) return '';
     // Replace placeholder image path and strip script tags for safety
     let out = html.replaceAll('[IMGPATH]', IMAGE_BASE);
@@ -68,20 +69,25 @@ export default function NoticePage() {
     out = out.replace(/\son\w+='[^']*'/gi, '');
     // Ensure anchor tags open in new tab securely
     out = out.replace(/<a /g, '<a target="_blank" rel="noreferrer noopener" ');
-    // Defer image loading: move src/srcset to data-* so they don't load until panel opens
-    out = out.replace(/<img\b[^>]*>/gi, (tag) => {
-      let t = tag;
-      // Move srcset -> data-srcset
-      t = t.replace(/\s+srcset=(['"])(.*?)\1/gi, ' data-srcset="$2"');
-      // Move src -> data-src (doesn't match data-src)
-      t = t.replace(/\ssrc=(['"])(.*?)\1/gi, ' data-src="$2"');
-      // Ensure lazy attribute exists
-      if (!/\sloading=/.test(t)) {
-        // Put loading right after <img
-        t = t.replace(/<img\b/, '<img loading="lazy"');
-      }
-      return t;
-    });
+    if (deferImages) {
+      // Defer image loading: move src/srcset to data-* so they don't load until panel opens
+      out = out.replace(/<img\b[^>]*>/gi, (tag) => {
+        let t = tag;
+        t = t.replace(/\s+srcset=(['"])(.*?)\1/gi, ' data-srcset="$2"');
+        t = t.replace(/\ssrc=(['"])(.*?)\1/gi, ' data-src="$2"');
+        if (!/\sloading=/.test(t)) {
+          t = t.replace(/<img\b/, '<img loading="lazy"');
+        }
+        return t;
+      });
+    } else {
+      // In single post mode force eager loading by removing any loading="lazy" (optional)
+  out = out.replace(/<img(?![^>]*\bloading=)[^>]*>/gi, (tag) => tag.replace(/<img\b/, '<img loading="eager"'));
+  // Also aggressively hydrate any leftover deferred attributes (in case of cached HTML or previous transform)
+  out = out.replace(/data-srcset=/gi, 'srcset=');
+  out = out.replace(/data-src=/gi, 'src=');
+  // If an img still has only data-src after React renders (SSR edge), a later effect also hydrates, but we cover string case here.
+    }
     return out;
   };
 
@@ -205,7 +211,8 @@ export default function NoticePage() {
     const container = scrollRef.current;
     if (!container) return;
     if (postId) {
-      container.querySelectorAll('.accordion-item.open .accordion-panel').forEach((el) => loadImagesInElement(el));
+      // Single post mode: item wrapper may not have generic 'open' class, so hydrate all panels
+      container.querySelectorAll('.accordion-panel').forEach((el) => loadImagesInElement(el));
     } else if (openId) {
       const el = document.getElementById(`accordion-item-${openId}`)?.querySelector('.accordion-panel');
       if (el) loadImagesInElement(el);
@@ -327,8 +334,9 @@ export default function NoticePage() {
               const isOpen = postId ? true : String(openId) === String(id);
               const title = it.title || `공지 ${idx + 1}`;
               const dateStr = formatDate(it.created_at);
-              const html = enhanceHtml(it.content);
+              const html = enhanceHtml(it.content, !postId); // don't defer images in single post mode
               const panelId = `notice-panel-${id}`;
+              const permalink = (typeof window !== 'undefined' ? window.location.origin : '') + `/notice/${id}`;
               return (
                 <div key={id} id={`accordion-item-${id}`} className={`${acc.item} ${postId ? acc.open : isOpen ? acc.open : ''}`}>
                   <button
@@ -348,7 +356,28 @@ export default function NoticePage() {
                     aria-label={`${title} 내용`}
                     aria-hidden={postId ? false : !isOpen}
                   >
-                    <div className={acc.noticeContent} onClick={onContentClick} dangerouslySetInnerHTML={{ __html: html }} />
+                    <div className={`${acc.noticeContent} ${styles.noticePanelInner}`} onClick={onContentClick}>
+                      {isOpen && (
+                        <div className={styles.permalink} onClick={(e) => e.stopPropagation()}>
+                          <a href={`/notice/${id}`} target="_blank" rel="noreferrer" title="새 탭에서 열기">
+                            {permalink}
+                          </a>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              try { navigator.clipboard.writeText(permalink); } catch {}
+                              setCopiedId(id);
+                              setTimeout(() => setCopiedId((cur) => (cur === id ? null : cur)), 1600);
+                            }}
+                            aria-label="URL 복사"
+                          >
+                            {copiedId === id ? '복사됨' : '복사'}
+                          </button>
+                        </div>
+                      )}
+                      <div dangerouslySetInnerHTML={{ __html: html }} />
+                    </div>
                   </div>
                 </div>
               );
