@@ -1,10 +1,69 @@
-.segmentedWrap { padding: 10px 12px; }
-.boardWrite { margin-bottom: 12px; }
-.boardWriteBody { display: grid; gap: 10px; }
-.boardWriteTags { display: flex; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
-.boardWriteMeta { display: flex; justify-content: space-between; align-items: center; }
-.boardActions { display: flex; gap: 8px; margin-top: 8px; }
-.commentForm { display: flex; gap: 8px; margin-top: 8px; align-items: flex-end; }
-.commentTextarea { flex: 1; resize: none; }
+.segmentedWrap {
+  padding: 10px 12px;
+}
+.boardWrite {
+  margin-bottom: 12px;
+}
+.boardWriteBody {
+  display: grid;
+  gap: 10px;
+}
+.boardWriteTags {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+.boardWriteMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.boardActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.commentForm {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  align-items: flex-end;
+}
+.commentTextarea {
+  flex: 1;
+  resize: none;
+}
 /* TODO: Move .segmented-control styles from global stylesheet into a local module
 	and update JSX to use module classes for full isolation. */
+
+/* 고정 링크 바 (Notice와 유사) */
+.permalink {
+  position: sticky;
+  top: 0;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: flex-end;
+  font-size: 12px;
+  padding: 4px 0 6px;
+  margin: -4px 0 4px;
+  z-index: 2;
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+.permalink a {
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-secondary, #555);
+  text-decoration: none;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 3px 6px;
+  border-radius: 4px;
+  background: #f0f0f0;
+}
+:global(:root[data-theme="dark"]) .permalink a {
+  background: #666666;
+}

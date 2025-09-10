@@ -5,3 +5,4 @@
 /public/data
 /example
 /dist
+.env.development
