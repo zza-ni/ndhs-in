@@ -19,10 +19,65 @@
   justify-content: space-between;
   align-items: center;
 }
+.boardWriteActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
 .boardActions {
   display: flex;
   gap: 8px;
-  margin-top: 8px;
+  margin-top: 20px;
+  align-items: center;
+  justify-content: center;
+}
+.commentSection {
+  margin-top: 12px;
+}
+.commentHeader {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: var(--color-text-secondary, #555);
+}
+:global(:root[data-theme="dark"]) .commentHeader {
+  color: var(--color-text-secondary, #aaa);
+}
+.commentList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.commentItem {
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.03);
+}
+:global(:root[data-theme="dark"]) .commentItem {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--main-font-color);
+}
+.commentMeta {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+.commentAuthor {
+  font-weight: 600;
+  font-size: 13px;
+}
+.commentDate {
+  font-size: 12px;
+  color: var(--color-text-secondary, #666);
+}
+:global(:root[data-theme="dark"]) .commentDate {
+  color: var(--color-text-secondary, #aaa);
+}
+.commentBody {
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 .commentForm {
   display: flex;
@@ -33,9 +88,8 @@
 .commentTextarea {
   flex: 1;
   resize: none;
+  min-height: 30px;
 }
-/* TODO: Move .segmented-control styles from global stylesheet into a local module
-	and update JSX to use module classes for full isolation. */
 
 /* 고정 링크 바 (Notice와 유사) */
 .permalink {

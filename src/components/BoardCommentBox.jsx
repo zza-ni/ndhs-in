@@ -1,5 +1,5 @@
 import React from "react";
-import form from "../components/ui/Form.module.css";
+import form from "./ui/Form.module.css";
 import styles from "../pages/BoardPage.module.css";
 
 // 게시판 댓글 입력 박스 (재사용 컴포넌트)

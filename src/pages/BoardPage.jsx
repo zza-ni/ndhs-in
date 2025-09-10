@@ -80,6 +80,9 @@ export default function BoardPage() {
   const segControlRef = React.useRef(null);
   const liveRegionRef = React.useRef(null);
 
+  // 게시물별 댓글 상태 저장: { [postId]: { items?: any[], loading?: boolean, error?: string } }
+  const [commentsByPost, setCommentsByPost] = React.useState({});
+
   // derived post id from the URL we manage. prefer explicit pathname parsing
   const urlPostId = React.useMemo(() => {
     const m = (locationPath || window.location.pathname || "").match(
@@ -196,6 +199,45 @@ export default function BoardPage() {
     if (!res.ok) throw new Error("comment");
     return res.json();
   }
+
+  // 댓글 목록 가져오기 (지연 로딩)
+  async function fetchComments(postId) {
+    const res = await fetch(`${BOARD_API}/${postId}/comments`, {
+      headers: { Accept: "application/json" },
+    });
+    if (!res.ok) throw new Error("Failed to load comments");
+    const data = await res.json();
+    if (Array.isArray(data?.comments)) return data.comments;
+    if (Array.isArray(data?.items)) return data.items;
+    if (Array.isArray(data)) return data;
+    return [];
+  }
+
+  // 특정 게시물의 댓글을 필요시에만 로드
+  const ensureComments = React.useCallback(
+    async (postId) => {
+      if (!postId) return;
+      const key = String(postId);
+      if (commentsByPost[key]?.items || commentsByPost[key]?.loading) return;
+      setCommentsByPost((prev) => ({
+        ...prev,
+        [key]: { ...(prev[key] || {}), loading: true, error: "" },
+      }));
+      try {
+        const items = await fetchComments(postId);
+        setCommentsByPost((prev) => ({
+          ...prev,
+          [key]: { ...(prev[key] || {}), items, loading: false, error: "" },
+        }));
+      } catch (e) {
+        setCommentsByPost((prev) => ({
+          ...prev,
+          [key]: { ...(prev[key] || {}), loading: false, error: "load" },
+        }));
+      }
+    },
+    [commentsByPost]
+  );
 
   // 추천(좋아요)
   async function likePost(postId) {
@@ -471,6 +513,19 @@ export default function BoardPage() {
     else document.body.classList.remove("modal-open");
   }, [lightboxOpen]);
 
+  // 아코디언 열리거나 단일 글(게시판) 모드일 때 해당 글의 댓글을 로드
+  React.useEffect(() => {
+    if (activeTab !== "board") return;
+    // 단일 글 모드: 해당 글의 댓글 로드
+    if (urlPostId) {
+      const pid = items?.[0]?.id || items?.[0]?.post_id || urlPostId;
+      if (pid) ensureComments(pid);
+      return;
+    }
+    // 목록 모드: 열린 아이템만 로드
+    if (openId) ensureComments(openId);
+  }, [activeTab, urlPostId, openId, items, ensureComments]);
+
   // 무한 스크롤
   React.useEffect(() => {
     if (urlPostId) return;
@@ -565,6 +620,7 @@ export default function BoardPage() {
   const [tag, setTag] = React.useState(TAGS[0]);
   const [submitting, setSubmitting] = React.useState(false);
   const [likingId, setLikingId] = React.useState(null);
+  const [writeFormOpen, setWriteFormOpen] = React.useState(false); // 글쓰기 아코디언 상태
 
   const autoResize = (el) => {
     if (!el) return;
@@ -587,6 +643,8 @@ export default function BoardPage() {
       setTitle("");
       setContent("");
       setTag(TAGS[0]);
+      // 글쓰기 폼 닫기
+      setWriteFormOpen(false);
     } catch {
       alert("글쓰기에 실패했어요.");
     } finally {
@@ -694,67 +752,95 @@ export default function BoardPage() {
             </label>
           </div>
         </div>
-        {/* 태그 필터: 단일 글 모드가 아닐 때, 공지/게시판 모두 표시 */}
-        {/* {!urlPostId && (
-          <TagBar
-            tags={tagOptions}
-            selected={selectedTag}
-            onSelect={setSelectedTag}
-          />
+        {/* 태그 필터: 게시판 탭에서만 */}
+        {!urlPostId && activeTab === "board" && (
+          <>
+            <TagBar
+              tags={tagOptions}
+              selected={selectedTag}
+              onSelect={setSelectedTag}
+            />
+            <Divider />
+          </>
         )}
-        <Divider /> */}
         {/* 게시판 탭에서만 글쓰기 표시 */}
         {!urlPostId && activeTab === "board" && (
-          <form className={`card ${styles.boardWrite}`} onSubmit={onSubmit}>
-            <div className="card-header">
-              <h3 className="card-title">글쓰기</h3>
-              <button
-                className={form.btn}
-                type="submit"
-                disabled={submitting || !title.trim() || !content.trim()}
-                title="등록"
-              >
-                {submitting ? "등록중…" : "등록"}
-              </button>
+          <div
+            className={`${acc.item} ${writeFormOpen ? acc.open : ""}`}
+            style={{ marginBottom: "10px" }}
+          >
+            <button
+              className={acc.header}
+              onClick={() => setWriteFormOpen(!writeFormOpen)}
+              aria-expanded={writeFormOpen}
+              aria-controls="write-form-panel"
+            >
+              <span className={acc.title} style={{ justifyContent: "center" }}>
+                ✍️ 새 글 쓰기
+              </span>
+              <span className={acc.icon} aria-hidden>
+                ▾
+              </span>
+            </button>
+            <div
+              className={`accordion-panel ${acc.panel}`}
+              id="write-form-panel"
+              role="region"
+              aria-label="글쓰기 폼"
+              aria-hidden={!writeFormOpen}
+            >
+              <form className={styles.boardWrite} onSubmit={onSubmit}>
+                <div className={styles.boardWriteBody}>
+                  <div className={styles.boardWriteTags}>
+                    {TAGS.map((t) => (
+                      <button
+                        type="button"
+                        key={t}
+                        className={`tag-chip${tag === t ? " active" : ""}`}
+                        onClick={() => setTag(t)}
+                        aria-pressed={tag === t}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                  <input
+                    className={form.input}
+                    placeholder="제목을 입력하세요"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    maxLength={80}
+                  />
+                  <textarea
+                    className={form.textarea}
+                    placeholder="내용을 입력하세요"
+                    rows={3}
+                    value={content}
+                    onChange={(e) => {
+                      setContent(e.target.value);
+                      autoResize(e.target);
+                    }}
+                    style={{ resize: "none" }}
+                    onInput={(e) => autoResize(e.target)}
+                  />
+                  {/* <div className={styles.boardWriteMeta}>
+                    <small className="muted">텍스트만 지원됩니다.</small>
+                    <small className="muted">{content.length}/2000</small>
+                  </div> */}
+                  <div className={styles.boardWriteActions}>
+                    <button
+                      className={form.btn}
+                      type="submit"
+                      disabled={submitting || !title.trim() || !content.trim()}
+                      title="등록"
+                    >
+                      {submitting ? "등록중…" : "등록"}
+                    </button>
+                  </div>
+                </div>
+              </form>
             </div>
-            <div className={`card-body ${styles.boardWriteBody}`}>
-              <div className={styles.boardWriteTags}>
-                {TAGS.map((t) => (
-                  <button
-                    type="button"
-                    key={t}
-                    className={`tag-chip${tag === t ? " active" : ""}`}
-                    onClick={() => setTag(t)}
-                    aria-pressed={tag === t}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
-              <input
-                className={form.input}
-                placeholder="제목을 입력하세요"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                maxLength={80}
-              />
-              <textarea
-                className={form.textarea}
-                placeholder="내용을 입력하세요"
-                rows={3}
-                value={content}
-                onChange={(e) => {
-                  setContent(e.target.value);
-                  autoResize(e.target);
-                }}
-                onInput={(e) => autoResize(e.target)}
-              />
-              <div className={styles.boardWriteMeta}>
-                <small className="muted">텍스트만 지원됩니다.</small>
-                <small className="muted">{content.length}/2000</small>
-              </div>
-            </div>
-          </form>
+          </div>
         )}
 
         {activeTab === "board" && loading && (
@@ -876,8 +962,82 @@ export default function BoardPage() {
                                 {it.likes || 0}
                               </button>
                             </div>
+                            {/* 댓글 목록 */}
+                            {(() => {
+                              const key = String(it.id || it.post_id);
+                              const cstate = commentsByPost[key] || {};
+                              const cloading = !!cstate.loading;
+                              const cerror = cstate.error;
+                              const list = Array.isArray(cstate.items)
+                                ? cstate.items
+                                : [];
+                              return (
+                                <div className={styles.commentSection}>
+                                  <h4 className={styles.commentHeader}>
+                                    댓글 {list.length || it.comments_count || 0}
+                                  </h4>
+                                  {cloading && (
+                                    <div
+                                      className="muted"
+                                      style={{ margin: "8px 0" }}
+                                    >
+                                      댓글을 불러오는 중…
+                                    </div>
+                                  )}
+                                  {cerror && (
+                                    <div
+                                      className="error"
+                                      style={{ margin: "8px 0" }}
+                                    >
+                                      댓글을 불러오지 못했어요.
+                                    </div>
+                                  )}
+                                  {list.length > 0 && (
+                                    <ul className={styles.commentList}>
+                                      {list.map((c) => (
+                                        <li
+                                          key={c.id || c.comment_id}
+                                          className={styles.commentItem}
+                                        >
+                                          <div className={styles.commentMeta}>
+                                            <span
+                                              className={styles.commentAuthor}
+                                            >
+                                              {c.author || c.user || "익명"}
+                                            </span>
+                                            <span
+                                              className={styles.commentDate}
+                                            >
+                                              {formatDate(c.created_at)}
+                                            </span>
+                                          </div>
+                                          <div className={styles.commentBody}>
+                                            {c.content}
+                                          </div>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  )}
+                                </div>
+                              );
+                            })()}
                             <BoardCommentBox
-                              onSubmit={(text) => onCommentSubmit(it, text)}
+                              onSubmit={async (text) => {
+                                const res = await onCommentSubmit(it, text);
+                                if (res) {
+                                  const key = String(it.id || it.post_id);
+                                  setCommentsByPost((prev) => {
+                                    const cur = prev[key] || {};
+                                    const items = Array.isArray(cur.items)
+                                      ? [...cur.items, res]
+                                      : [res];
+                                    return {
+                                      ...prev,
+                                      [key]: { ...cur, items },
+                                    };
+                                  });
+                                }
+                              }}
                             />
                           </>
                         )}
