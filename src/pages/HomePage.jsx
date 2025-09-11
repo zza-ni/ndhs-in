@@ -10,6 +10,7 @@ import {
 } from "../components/ui/Skeletons";
 import { Link } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
+import { useToast } from "../components/ui/Toast.jsx";
 import {
   getNoticeListCache,
   isNoticeCacheFresh,
@@ -74,9 +75,24 @@ const formatNoticeDate = (yyyymmddHHMMSS) => {
 };
 
 export default function HomePage() {
+  const toast = useToast();
   const API_ENDPOINT = import.meta.env.VITE_API_ENDPOINT;
   const NOTICE_API = `${API_ENDPOINT.replace(/\/$/, "")}/boards/notice`;
-  const LAUNDRY_API = `${API_ENDPOINT.replace(/\/$/, "")}/laundry/f`;
+  // 세탁실 성별 (남 m / 여 f), 기본값 m. localStorage에 저장/복원
+  const [gender, setGender] = useState(
+    () =>
+      (typeof localStorage !== "undefined" && localStorage.getItem("gender")) ||
+      "m"
+  );
+  useEffect(() => {
+    try {
+      localStorage.setItem("gender", gender);
+    } catch {}
+  }, [gender]);
+  const LAUNDRY_API = useMemo(
+    () => `${API_ENDPOINT.replace(/\/$/, "")}/laundry/${gender}`,
+    [API_ENDPOINT, gender]
+  );
   const [menuLoading, setMenuLoading] = useState(true);
   const [menuError, setMenuError] = useState("");
   const [menuOfToday, setMenuOfToday] = useState(null); // { mealLabel, items, dateLabel }
@@ -205,6 +221,32 @@ export default function HomePage() {
     return `${mm}:${ss}`;
   };
 
+  // 하루 1회만 성별 변경 허용
+  const handleGenderSelect = (next) => {
+    if (next === gender) return;
+    try {
+      const lastAt = Number(localStorage.getItem("genderChangedAt") || 0);
+      const nowMs = Date.now();
+      const oneDay = 24 * 60 * 60 * 1000;
+      if (lastAt && nowMs - lastAt < oneDay) {
+        toast?.show("성별은 하루에 1번만 변경할 수 있어요.", { type: "error" });
+        return;
+      }
+      const ok = window.confirm(
+        "성별은 하루에 1번만 변경할 수 있어요. 변경할까요?"
+      );
+      if (!ok) return;
+      localStorage.setItem("genderChangedAt", String(nowMs));
+      setGender(next);
+    } catch {
+      const ok = window.confirm(
+        "성별은 하루에 1번만 변경할 수 있어요. 변경할까요?"
+      );
+      if (!ok) return;
+      setGender(next);
+    }
+  };
+
   return (
     <main className="main-content page-content">
       <PageHeader title="홈" />
@@ -297,42 +339,54 @@ export default function HomePage() {
           <Card as="article">
             <CardHeader>
               <CardTitle>건조기 사용현황</CardTitle>
-              <button
+              <div
                 className="card-link"
-                onClick={() => {
-                  // 간단 새로고침
-                  (async () => {
-                    try {
-                      setDryerLoading(true);
-                      setDryerError("");
-                      const res = await fetch(LAUNDRY_API, {
-                        headers: { Accept: "application/json" },
-                      });
-                      if (!res.ok) throw new Error("laundry");
-                      const data = await res.json();
-                      const onlyDryers = (
-                        Array.isArray(data) ? data : []
-                      ).filter((d) => d.equipmentTypeCd === "DRYER");
-                      const num = (s) => {
-                        const m = String(s || "").match(/(\d+)/);
-                        return m ? parseInt(m[1], 10) : 9999;
-                      };
-                      onlyDryers.sort(
-                        (a, b) => num(a.equipmentName) - num(b.equipmentName)
-                      );
-                      setDryers(onlyDryers.slice(0, 5));
-                      setDryersFetchedAt(Date.now());
-                    } catch (e) {
-                      setDryerError("건조기 현황을 불러오지 못했어요.");
-                    } finally {
-                      setDryerLoading(false);
-                    }
-                  })();
+                role="tablist"
+                aria-label="세탁실 성별 선택"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  border: "1px solid var(--disable-color)",
+                  borderRadius: 999,
+                  overflow: "hidden",
+                  background: "#fff",
                 }}
-                aria-label="새로고침"
               >
-                ↻
-              </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={gender === "m"}
+                  onClick={() => handleGenderSelect("m")}
+                  style={{
+                    padding: "3px 10px",
+                    border: "none",
+                    background:
+                      gender === "m" ? "var(--focus-color)" : "transparent",
+                    color: gender === "m" ? "#fff" : "inherit",
+                    cursor: "pointer",
+                  }}
+                  title="남자 세탁실"
+                >
+                  남
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={gender === "f"}
+                  onClick={() => handleGenderSelect("f")}
+                  style={{
+                    padding: "3px 10px",
+                    border: "none",
+                    background:
+                      gender === "f" ? "var(--focus-color)" : "transparent",
+                    color: gender === "f" ? "#fff" : "inherit",
+                    cursor: "pointer",
+                  }}
+                  title="여자 세탁실"
+                >
+                  여
+                </button>
+              </div>
             </CardHeader>
             {dryerLoading ? (
               <CardBody>

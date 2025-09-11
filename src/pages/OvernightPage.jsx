@@ -24,6 +24,7 @@ export default function OvernightPage() {
   // 복귀 예정일만 사용 (기본값: 내일)
   const [returnDate, setReturnDate] = React.useState(tomorrow);
   const [dateError, setDateError] = React.useState("");
+  const [reason, setReason] = React.useState("");
 
   // 복귀 예정일 유효성 (일부 iOS에서 min 무시 가능성 방어)
   React.useEffect(() => {
@@ -68,14 +69,25 @@ export default function OvernightPage() {
                 style={{ flex: 1 }}
                 type="text"
                 placeholder="귀향(광주), 도서관(혜화역) 등"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
               />
             </div>
             <div style={{ display: "flex", justifyContent: "flex-end" }}>
               <button
                 className={form.btn}
-                disabled={!!dateError}
-                aria-disabled={!!dateError}
+                disabled={!!dateError || !reason.trim()}
+                aria-disabled={!!dateError || !reason.trim()}
                 title={dateError || undefined}
+                type="button"
+                onClick={() => {
+                  toast?.show(
+                    "남도학숙과 협의되지 않아 현재 지원하지 않아요.",
+                    {
+                      type: "error",
+                    }
+                  );
+                }}
               >
                 신청
               </button>

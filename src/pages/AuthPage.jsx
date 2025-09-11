@@ -1,8 +1,10 @@
 import React from "react";
 import PageHeader from "../components/PageHeader";
+import { useToast } from "../components/ui/Toast.jsx";
 import form from "../components/ui/Form.module.css";
 
 export default function AuthPage() {
+  const toast = useToast();
   const API_ENDPOINT = import.meta.env.VITE_API_ENDPOINT;
   // Assumption: login endpoint
   const AUTH_API = `${API_ENDPOINT?.replace(/\/$/, "") || ""}/auth/login`;
@@ -55,7 +57,11 @@ export default function AuthPage() {
         setSuccess("로그인 성공");
       }
     } catch (err) {
-      setError(err.message || "네트워크 오류입니다.");
+      setError("");
+      toast?.show("남도학숙과 협의되지 않아 현재 지원하지 않아요.", {
+        type: "error",
+      });
+      // toast?.show(err.message || "네트워크 오류입니다.", { type: "error" });
     } finally {
       setLoading(false);
     }
@@ -152,6 +158,11 @@ export default function AuthPage() {
                   type="checkbox"
                   checked={remember}
                   onChange={(e) => setRemember(e.target.checked)}
+                  onClick={() => {
+                    toast?.show("아이디를 기기에 저장해요.", {
+                      type: "info",
+                    });
+                  }}
                 />
                 <span>아이디 저장</span>
               </label>
@@ -195,13 +206,9 @@ export default function AuthPage() {
                 />
                 <circle cx="12" cy="7.5" r="1.25" fill="currentColor" />
               </svg>
-              <div>남도인은 아이디, 비밀번호를 저장하지 않습니다.</div>
+              <div>남도인은 아이디, 비밀번호를 서버에 저장하지 않습니다.</div>
             </div>
-            {error && (
-              <div role="alert" className="card-error" style={{ marginTop: 4 }}>
-                {error}
-              </div>
-            )}
+            {/* 에러 메시지는 토스트로 대체 */}
             {success && (
               <div
                 role="status"
