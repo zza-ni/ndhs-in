@@ -1,27 +1,35 @@
-import React from 'react';
+import React from "react";
 
 // Safe UA helpers (avoid crashing when window/navigator are unavailable)
 const getUA = () => {
   try {
-    return (typeof navigator !== 'undefined' && navigator.userAgent) || '';
+    return (typeof navigator !== "undefined" && navigator.userAgent) || "";
   } catch {
-    return '';
+    return "";
   }
 };
 const isiOS = () => /iphone|ipad|ipod/i.test(getUA());
 const isKakaoInAppBrowser = () => /KAKAOTALK/i.test(getUA());
 const isSafari = () => {
   const ua = getUA();
-  return isiOS() && /Safari/i.test(ua) && !/CriOS/i.test(ua) && !isKakaoInAppBrowser() && !/FBAV|Line/i.test(ua);
+  return (
+    isiOS() &&
+    /Safari/i.test(ua) &&
+    !/CriOS/i.test(ua) &&
+    !isKakaoInAppBrowser() &&
+    !/FBAV|Line/i.test(ua)
+  );
 };
 
 // Capture early fired beforeinstallprompt events so we don't miss them on mobile
 let earlyBIPEvent = null;
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   window.addEventListener(
-    'beforeinstallprompt',
+    "beforeinstallprompt",
     (e) => {
-      try { if (e && typeof e.preventDefault === 'function') e.preventDefault(); } catch {}
+      try {
+        if (e && typeof e.preventDefault === "function") e.preventDefault();
+      } catch {}
       earlyBIPEvent = e;
     },
     { once: true }
@@ -38,9 +46,18 @@ export default function PWAInstallPrompt() {
 
   const isInstalled = React.useMemo(() => {
     try {
-      const dm = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
-      const iosStandalone = typeof navigator !== 'undefined' && 'standalone' in navigator && navigator.standalone;
-      const twa = typeof document !== 'undefined' && document.referrer && document.referrer.startsWith('android-app://');
+      const dm =
+        typeof window !== "undefined" &&
+        window.matchMedia &&
+        window.matchMedia("(display-mode: standalone)").matches;
+      const iosStandalone =
+        typeof navigator !== "undefined" &&
+        "standalone" in navigator &&
+        navigator.standalone;
+      const twa =
+        typeof document !== "undefined" &&
+        document.referrer &&
+        document.referrer.startsWith("android-app://");
       return Boolean(dm || iosStandalone || twa);
     } catch {
       return false;
@@ -66,7 +83,7 @@ export default function PWAInstallPrompt() {
 
     const onBefore = (e) => {
       try {
-        if (e && typeof e.preventDefault === 'function') e.preventDefault();
+        if (e && typeof e.preventDefault === "function") e.preventDefault();
       } catch {}
       setDeferred(e);
       // Delay showing the snackbar to avoid popping in immediately on load
@@ -88,18 +105,26 @@ export default function PWAInstallPrompt() {
       earlyBIPEvent = null;
     }
     // Also listen for future events (if not already handled)
-    window.addEventListener('beforeinstallprompt', onBefore, { once: true });
-    window.addEventListener('appinstalled', onInstalled);
+    window.addEventListener("beforeinstallprompt", onBefore, { once: true });
+    window.addEventListener("appinstalled", onInstalled);
     const onSWMessage = (e) => {
-      if (e && e.data && e.data.type === 'OPEN_URL' && e.data.url) {
-        try { window.location.href = e.data.url; } catch {}
+      if (e && e.data && e.data.type === "OPEN_URL" && e.data.url) {
+        try {
+          window.location.href = e.data.url;
+        } catch {}
       }
     };
-    navigator.serviceWorker && navigator.serviceWorker.addEventListener && navigator.serviceWorker.addEventListener('message', onSWMessage);
+    navigator.serviceWorker &&
+      navigator.serviceWorker.addEventListener &&
+      navigator.serviceWorker.addEventListener("message", onSWMessage);
     return () => {
-  window.removeEventListener('beforeinstallprompt', onBefore);
-      window.removeEventListener('appinstalled', onInstalled);
-      try { navigator.serviceWorker && navigator.serviceWorker.removeEventListener && navigator.serviceWorker.removeEventListener('message', onSWMessage); } catch {}
+      window.removeEventListener("beforeinstallprompt", onBefore);
+      window.removeEventListener("appinstalled", onInstalled);
+      try {
+        navigator.serviceWorker &&
+          navigator.serviceWorker.removeEventListener &&
+          navigator.serviceWorker.removeEventListener("message", onSWMessage);
+      } catch {}
       if (snackTimerRef.current) {
         clearTimeout(snackTimerRef.current);
         snackTimerRef.current = null;
@@ -122,17 +147,24 @@ export default function PWAInstallPrompt() {
       installingRef.current = true;
       const eventOrNull = await new Promise((resolve) => {
         if (earlyBIPEvent) {
-          const e = earlyBIPEvent; earlyBIPEvent = null; resolve(e); return;
+          const e = earlyBIPEvent;
+          earlyBIPEvent = null;
+          resolve(e);
+          return;
         }
         const handler = (e) => {
-          try { if (e && typeof e.preventDefault === 'function') e.preventDefault(); } catch {}
-          window.removeEventListener('beforeinstallprompt', handler);
+          try {
+            if (e && typeof e.preventDefault === "function") e.preventDefault();
+          } catch {}
+          window.removeEventListener("beforeinstallprompt", handler);
           resolve(e);
         };
-        window.addEventListener('beforeinstallprompt', handler, { once: true });
+        window.addEventListener("beforeinstallprompt", handler, { once: true });
         // timeout fallback: give up silently after 6000ms
         setTimeout(() => {
-          try { window.removeEventListener('beforeinstallprompt', handler); } catch {}
+          try {
+            window.removeEventListener("beforeinstallprompt", handler);
+          } catch {}
           resolve(null);
         }, 6000);
       });
@@ -157,33 +189,76 @@ export default function PWAInstallPrompt() {
           <div className="snackbar-content">
             <div>
               <strong>홈 화면에 행운의 아이콘을</strong>
-              <div className="snackbar-desc">남도인🍀을 심어보세요!<br /></div>
+              <div className="snackbar-desc">
+                남도인🍀을 심어보세요!
+                <br />
+              </div>
             </div>
-            <button id="snackbar-install-btn" onClick={requestInstall}>설치</button>
+            <button id="snackbar-install-btn" onClick={requestInstall}>
+              설치
+            </button>
           </div>
         </div>
       )}
 
       {/* iOS Install modal */}
       {showIOSModal && (
-        <div className="modal" id="modal-ios-install" style={{ display: 'flex' }}>
+        <div
+          className="modal"
+          id="modal-ios-install"
+          style={{ display: "flex" }}
+        >
           <div className="modal-content">
-            <img src="/src/ios-app-icon.png" alt="앱 아이콘" width="48" height="48" />
+            <img
+              src="/src/ios-app-icon.png"
+              alt="앱 아이콘"
+              width="48"
+              height="48"
+            />
             <h2>남도인</h2>
             <div className="modal-guide">
               {isSafari() ? (
                 <p>
-                  <img src="/src/ios-share.png" alt="공유 버튼" width="17" style={{ verticalAlign: 'middle' }} /> &nbsp; 버튼을 누르고{' '}
-                  <b style={{ color: 'blue' }}>홈 화면에 추가하기</b>
+                  <img
+                    src="/src/ios-share.png"
+                    alt="공유 버튼"
+                    width="17"
+                    style={{ verticalAlign: "middle" }}
+                  />{" "}
+                  &nbsp; 버튼을 누르고{" "}
+                  <b style={{ color: "blue" }}>홈 화면에 추가하기</b>
                 </p>
               ) : (
                 <div>
-                  <p>1.&nbsp;&nbsp;<img src="/src/ios-share.png" alt="공유 버튼" width="15" style={{ verticalAlign: 'middle' }} /> &nbsp; 버튼을 누르고 <b style={{ color: 'blue' }}>Safari로 열기</b></p>
-                  <p>2.&nbsp;&nbsp;<img src="/src/ios-share.png" alt="공유 버튼" width="15" style={{ verticalAlign: 'middle' }} /> &nbsp; 버튼을 누르고 <b style={{ color: 'blue' }}>홈 화면에 추가하기</b></p>
+                  <p>
+                    1.&nbsp;&nbsp;
+                    <img
+                      src="/src/ios-share.png"
+                      alt="공유 버튼"
+                      width="15"
+                      style={{ verticalAlign: "middle" }}
+                    />{" "}
+                    &nbsp; 버튼을 누르고{" "}
+                    <b style={{ color: "blue" }}>Safari로 열기</b>
+                  </p>
+                  <p>
+                    2.&nbsp;&nbsp;
+                    <img
+                      src="/src/ios-share.png"
+                      alt="공유 버튼"
+                      width="15"
+                      style={{ verticalAlign: "middle" }}
+                    />{" "}
+                    &nbsp; 버튼을 누르고{" "}
+                    <b style={{ color: "blue" }}>홈 화면에 추가하기</b>
+                  </p>
                 </div>
               )}
             </div>
-            <button className="modal-close" onClick={() => setShowIOSModal(false)}>
+            <button
+              className="modal-close"
+              onClick={() => setShowIOSModal(false)}
+            >
               닫기
             </button>
           </div>

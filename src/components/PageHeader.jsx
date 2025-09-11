@@ -1,8 +1,8 @@
-import React from 'react';
-import styles from './PageHeader.module.css';
+import React from "react";
+import styles from "./PageHeader.module.css";
 
 export default function PageHeader({ title, right = null, onLogoClick }) {
-  const handleLogoClick = onLogoClick || (() => (window.location.href = '/'));
+  const handleLogoClick = onLogoClick || (() => (window.location.href = "/"));
   return (
     <div className={styles.header}>
       <div onClick={handleLogoClick}>

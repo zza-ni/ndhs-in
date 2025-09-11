@@ -1,40 +1,45 @@
 // Global app initializer: Firebase, Analytics, SW registration, FCM token sync
-import { initializeApp } from 'firebase/app';
-import { getAnalytics, isSupported as analyticsSupported } from 'firebase/analytics';
-import { getMessaging, getToken } from 'firebase/messaging';
+import { initializeApp } from "firebase/app";
+import {
+  getAnalytics,
+  isSupported as analyticsSupported,
+} from "firebase/analytics";
+import { getMessaging, getToken } from "firebase/messaging";
 
 const firebaseConfig = {
-  apiKey: 'AIzaSyCeqeuQkTb3wioxIogkn7hcUQz9FP2K1XA',
-  authDomain: 'ndhs-bob.firebaseapp.com',
-  projectId: 'ndhs-bob',
-  storageBucket: 'ndhs-bob.firebasestorage.app',
-  messagingSenderId: '109335510565',
-  appId: '1:109335510565:web:8777eb5e791089da23c9cc',
-  measurementId: 'G-32BMZXN9CQ',
+  apiKey: "AIzaSyCeqeuQkTb3wioxIogkn7hcUQz9FP2K1XA",
+  authDomain: "ndhs-bob.firebaseapp.com",
+  projectId: "ndhs-bob",
+  storageBucket: "ndhs-bob.firebasestorage.app",
+  messagingSenderId: "109335510565",
+  appId: "1:109335510565:web:8777eb5e791089da23c9cc",
+  measurementId: "G-32BMZXN9CQ",
 };
 
 let app;
 let messaging;
 
 function registerServiceWorkers() {
-  if ('serviceWorker' in navigator) {
+  if ("serviceWorker" in navigator) {
     try {
-  // Root-scoped SW for PWA control
-  navigator.serviceWorker.register('/service-worker.js').then((reg) => {
+      // Root-scoped SW for PWA control
+      navigator.serviceWorker.register("/service-worker.js").then((reg) => {
         // force update and activate immediately
-        try { reg.update(); } catch {}
-        if (reg.waiting) reg.waiting.postMessage('SKIP_WAITING');
-        reg.addEventListener('updatefound', () => {
+        try {
+          reg.update();
+        } catch {}
+        if (reg.waiting) reg.waiting.postMessage("SKIP_WAITING");
+        reg.addEventListener("updatefound", () => {
           const installing = reg.installing;
           if (!installing) return;
-          installing.addEventListener('statechange', () => {
-            if (installing.state === 'installed' && reg.waiting) {
-              reg.waiting.postMessage('SKIP_WAITING');
+          installing.addEventListener("statechange", () => {
+            if (installing.state === "installed" && reg.waiting) {
+              reg.waiting.postMessage("SKIP_WAITING");
             }
           });
         });
         let reloading = false;
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
+        navigator.serviceWorker.addEventListener("controllerchange", () => {
           if (reloading) return;
           reloading = true;
           location.reload();
@@ -45,9 +50,15 @@ function registerServiceWorkers() {
     try {
       navigator.serviceWorker.getRegistrations().then((regs) => {
         regs.forEach((reg) => {
-          const urls = [reg?.active?.scriptURL, reg?.waiting?.scriptURL, reg?.installing?.scriptURL].filter(Boolean);
-          if (urls.some((u) => u.endsWith('/firebase-messaging-sw.js'))) {
-            try { reg.unregister(); } catch {}
+          const urls = [
+            reg?.active?.scriptURL,
+            reg?.waiting?.scriptURL,
+            reg?.installing?.scriptURL,
+          ].filter(Boolean);
+          if (urls.some((u) => u.endsWith("/firebase-messaging-sw.js"))) {
+            try {
+              reg.unregister();
+            } catch {}
           }
         });
       });
@@ -73,22 +84,27 @@ async function initFirebase() {
 
 function getDeviceId() {
   try {
-    let id = localStorage.getItem('deviceId');
+    let id = localStorage.getItem("deviceId");
     if (!id) {
-      id = (crypto && crypto.randomUUID) ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36);
-      localStorage.setItem('deviceId', id);
+      id =
+        crypto && crypto.randomUUID
+          ? crypto.randomUUID()
+          : Math.random().toString(36).slice(2) + Date.now().toString(36);
+      localStorage.setItem("deviceId", id);
     }
     return id;
-  } catch { return undefined; }
+  } catch {
+    return undefined;
+  }
 }
 
 function saveTokenToServer(token) {
   const deviceId = getDeviceId();
-  const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
-  const platform = typeof navigator !== 'undefined' ? navigator.platform : '';
-  return fetch('/api/saveToken', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+  const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+  const platform = typeof navigator !== "undefined" ? navigator.platform : "";
+  return fetch("/api/saveToken", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ token, deviceId, ua, platform }),
   }).then((r) => r.json());
 }
@@ -98,35 +114,49 @@ function saveTokenToServer(token) {
 // Helpers
 const isInstalledPWA = () => {
   try {
-    const dm = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
-    const iosStandalone = typeof navigator !== 'undefined' && 'standalone' in navigator && navigator.standalone;
-    const twa = typeof document !== 'undefined' && document.referrer && document.referrer.startsWith('android-app://');
+    const dm =
+      typeof window !== "undefined" &&
+      window.matchMedia &&
+      window.matchMedia("(display-mode: standalone)").matches;
+    const iosStandalone =
+      typeof navigator !== "undefined" &&
+      "standalone" in navigator &&
+      navigator.standalone;
+    const twa =
+      typeof document !== "undefined" &&
+      document.referrer &&
+      document.referrer.startsWith("android-app://");
     return Boolean(dm || iosStandalone || twa);
   } catch {
     return false;
   }
 };
 const isApple = () => {
-  try { return /iPhone|iPad|iPod/i.test(navigator.userAgent || ''); } catch { return false; }
+  try {
+    return /iPhone|iPad|iPod/i.test(navigator.userAgent || "");
+  } catch {
+    return false;
+  }
 };
 
 export async function trySaveTokenIfGranted() {
   await initFirebase();
   registerServiceWorkers();
-  if (!('Notification' in window) || !messaging) return false;
-  if (Notification.permission !== 'granted') return false;
+  if (!("Notification" in window) || !messaging) return false;
+  if (Notification.permission !== "granted") return false;
   try {
     const registration = await navigator.serviceWorker.ready;
     const currentToken = await getToken(messaging, {
-      vapidKey: 'BCnsNKzhkJVouCCvFADUHBuzW6PUZTNDiuJOEfpGY-Psgn9dGX9rJBTUmyfoUbNyhHmesHJoXKehoLfZPG-LrZI',
+      vapidKey:
+        "BCnsNKzhkJVouCCvFADUHBuzW6PUZTNDiuJOEfpGY-Psgn9dGX9rJBTUmyfoUbNyhHmesHJoXKehoLfZPG-LrZI",
       serviceWorkerRegistration: registration,
     });
     if (!currentToken) return false;
-    const saved = localStorage.getItem('savedPushToken');
+    const saved = localStorage.getItem("savedPushToken");
     if (currentToken !== saved) {
       await saveTokenToServer(currentToken);
-      localStorage.setItem('savedPushToken', currentToken);
-      localStorage.setItem('pushRegistered', 'true');
+      localStorage.setItem("savedPushToken", currentToken);
+      localStorage.setItem("pushRegistered", "true");
     }
     return true;
   } catch {
@@ -139,9 +169,9 @@ export async function trySaveTokenIfGranted() {
 export async function requestPushPermission() {
   await initFirebase();
   registerServiceWorkers();
-  if (!('Notification' in window)) return false;
+  if (!("Notification" in window)) return false;
   const permission = await Notification.requestPermission();
-  if (permission !== 'granted') return false;
+  if (permission !== "granted") return false;
 
   // 웹 푸시 비활성화: FCM 경로만 사용
 
@@ -149,15 +179,16 @@ export async function requestPushPermission() {
   const registration = await navigator.serviceWorker.ready;
   try {
     const currentToken = await getToken(messaging, {
-      vapidKey: 'BCnsNKzhkJVouCCvFADUHBuzW6PUZTNDiuJOEfpGY-Psgn9dGX9rJBTUmyfoUbNyhHmesHJoXKehoLfZPG-LrZI',
+      vapidKey:
+        "BCnsNKzhkJVouCCvFADUHBuzW6PUZTNDiuJOEfpGY-Psgn9dGX9rJBTUmyfoUbNyhHmesHJoXKehoLfZPG-LrZI",
       serviceWorkerRegistration: registration,
     });
     if (!currentToken) return false;
-    const saved = localStorage.getItem('savedPushToken');
+    const saved = localStorage.getItem("savedPushToken");
     if (currentToken !== saved) {
       await saveTokenToServer(currentToken);
-      localStorage.setItem('savedPushToken', currentToken);
-      localStorage.setItem('pushRegistered', 'true');
+      localStorage.setItem("savedPushToken", currentToken);
+      localStorage.setItem("pushRegistered", "true");
     }
     return true;
   } catch {
@@ -175,6 +206,8 @@ export async function tryEnsurePushRegistered() {
   await initFirebase();
   registerServiceWorkers();
   // best-effort save if already granted
-  try { localStorage.removeItem('savedWebSub'); } catch {}
+  try {
+    localStorage.removeItem("savedWebSub");
+  } catch {}
   tryEnsurePushRegistered();
 })();

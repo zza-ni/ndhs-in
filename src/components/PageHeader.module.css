@@ -21,6 +21,18 @@
   box-shadow: 0 10px 30px var(--shadow-overlay);
 }
 
-.header img { height: 40px; width: auto; display: block; border-radius: 8px; object-fit: contain; }
+.header img {
+  height: 40px;
+  width: auto;
+  display: block;
+  border-radius: 8px;
+  object-fit: contain;
+}
 
-.title { margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--main-font-color); line-height: 1; }
+.title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--main-font-color);
+  line-height: 1;
+}

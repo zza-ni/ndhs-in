@@ -7,7 +7,9 @@
   border-radius: 1em;
 }
 
-.radio { display: none; }
+.radio {
+  display: none;
+}
 
 .label {
   flex: 1;
@@ -33,6 +35,13 @@
 }
 
 @media (max-width: 680px) {
-  .root { font-size: 0.92rem; padding: 2px; }
-  .label { font-size: 0.92rem; padding: 7px 0; margin: 0 1px; }
+  .root {
+    font-size: 0.92rem;
+    padding: 2px;
+  }
+  .label {
+    font-size: 0.92rem;
+    padding: 7px 0;
+    margin: 0 1px;
+  }
 }

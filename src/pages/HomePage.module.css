@@ -1,4 +1,16 @@
-.preline { white-space: pre-line; }
-.equipments { display: flex; gap: 6px; justify-content: space-between; flex-wrap: wrap; }
-.equipmentSvg { position: relative; }
-.equipmentTime { font-size: 10px; text-align: center; }
+.preline {
+  white-space: pre-line;
+}
+.equipments {
+  display: flex;
+  gap: 6px;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.equipmentSvg {
+  position: relative;
+}
+.equipmentTime {
+  font-size: 10px;
+  text-align: center;
+}

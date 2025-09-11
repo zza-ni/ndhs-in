@@ -12,10 +12,16 @@
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.textarea { min-height: 90px; line-height: 1.5; }
+.textarea {
+  min-height: 90px;
+  line-height: 1.5;
+}
 
 .input::placeholder,
-.textarea::placeholder { color: var(--sub-font-color); opacity: 0.8; }
+.textarea::placeholder {
+  color: var(--sub-font-color);
+  opacity: 0.8;
+}
 
 .input:focus,
 .textarea:focus {
@@ -43,10 +49,14 @@
 }
 
 :global(:root[data-theme="dark"]) .input:focus::placeholder,
-:global(:root[data-theme="dark"]) .textarea:focus::placeholder { opacity: 0.7; }
+:global(:root[data-theme="dark"]) .textarea:focus::placeholder {
+  opacity: 0.7;
+}
 
 :global(:root[data-theme="dark"]) .input::placeholder,
-:global(:root[data-theme="dark"]) .textarea::placeholder { color: #a0c3a9; }
+:global(:root[data-theme="dark"]) .textarea::placeholder {
+  color: #a0c3a9;
+}
 
 .btn {
   appearance: none;
@@ -62,9 +72,20 @@
   box-shadow: 0 2px 8px var(--shadow);
 }
 
-.btn:hover { filter: brightness(1.03); }
-.btn:active { transform: translateY(1px); }
-.btn:disabled { opacity: 0.6; cursor: not-allowed; }
-.btn[aria-pressed="true"] { box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.25); }
+.btn:hover {
+  filter: brightness(1.03);
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.btn[aria-pressed="true"] {
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.25);
+}
 
-:global(:root[data-theme="dark"]) .btn { background: #338a3e; }
+:global(:root[data-theme="dark"]) .btn {
+  background: #338a3e;
+}
