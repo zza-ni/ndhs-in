@@ -262,13 +262,13 @@ function AppShell() {
 export default function App() {
   // 초기 테마 설정 및 시스템 변경 동기화
   React.useEffect(() => {
-    const saved = localStorage.getItem("theme") || "system";
+    const saved = localStorage.getItem("theme") || "dark";
     applyTheme(saved);
 
     // storage 이벤트로 다른 탭의 변경사항 동기화
     const onStorage = (e) => {
       if (e.key === "theme") {
-        const newVal = e.newValue || "system";
+        const newVal = e.newValue || "dark";
         applyTheme(newVal);
       }
     };
@@ -278,7 +278,7 @@ export default function App() {
     const mql =
       window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)");
     const onMqlChange = () => {
-      const cur = localStorage.getItem("theme") || "system";
+      const cur = localStorage.getItem("theme") || "dark";
       if (cur === "system") applyTheme("system");
     };
     if (mql && "addEventListener" in mql)

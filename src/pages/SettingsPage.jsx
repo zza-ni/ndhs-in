@@ -5,14 +5,18 @@ import Divider from "../components/ui/Divider";
 import seg from "../components/ui/SegmentedControl.module.css";
 import form from "../components/ui/Form.module.css";
 import { TagChip } from "../components/ui/Chip";
-import { requestPushPermission, tryEnsurePushRegistered } from "../initApp";
+import {
+  requestPushPermission,
+  tryEnsurePushRegistered,
+  disablePush,
+} from "../initApp";
 import { clearBoardListCache } from "../lib/boardCache";
 import { clearNoticeListCache } from "../lib/noticeCache";
 
 export default function SettingsPage() {
   // 테마: light | dark | system
   const [theme, setTheme] = useState(
-    () => localStorage.getItem("theme") || "system"
+    () => localStorage.getItem("theme") || "dark"
   );
   useEffect(() => {
     localStorage.setItem("theme", theme);
@@ -40,7 +44,7 @@ export default function SettingsPage() {
       return;
     }
     const perm = Notification.permission;
-    if (perm === "granted") setPushStatus("등록 대기");
+    if (perm === "granted") setPushStatus("허용됨");
     else if (perm === "denied") setPushStatus("미허용");
     else setPushStatus("미설정");
   }, []);
@@ -48,11 +52,7 @@ export default function SettingsPage() {
   const onEnablePush = async () => {
     const ok = await requestPushPermission();
     setPushStatus(
-      ok
-        ? "등록됨"
-        : Notification.permission === "denied"
-        ? "미허용"
-        : "등록 대기"
+      ok ? "등록됨" : Notification.permission === "denied" ? "미허용" : "허용됨"
     );
   };
 
@@ -62,7 +62,7 @@ export default function SettingsPage() {
       ok
         ? "등록됨"
         : Notification.permission === "granted"
-        ? "등록 대기"
+        ? "허용됨"
         : Notification.permission === "denied"
         ? "미허용"
         : "미설정"
@@ -78,23 +78,19 @@ export default function SettingsPage() {
   return (
     <main className="main-content page-content">
       <PageHeader title="설정" />
-      <div className="container" style={{ display: "grid", gap: 6 }}>
-        {/* 테마 (한 줄) */}
-        <Card style={{ height: 70, margin: 0 }}>
-          <CardHeader
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 12,
-            }}
-          >
-            <CardTitle style={{ margin: 0 }}>테마</CardTitle>
+      <div
+        className="container"
+        style={{ display: "flex", flexDirection: "column" }}
+      >
+        {/* 테마 설정 */}
+        <Card>
+          <CardHeader style={{ padding: "10px 15px" }}>
+            <CardTitle>테마</CardTitle>
             <div
               className={seg.root}
               role="tablist"
               aria-label="테마 선택"
-              style={{ margin: 0, width: "50%" }}
+              style={{ margin: 0, minWidth: 130 }}
             >
               <input
                 className={seg.radio}
@@ -130,7 +126,7 @@ export default function SettingsPage() {
               >
                 다크
               </label>
-              <input
+              {/* <input
                 className={seg.radio}
                 type="radio"
                 id="theme-system"
@@ -146,51 +142,84 @@ export default function SettingsPage() {
                 tabIndex={0}
               >
                 시스템
+              </label> */}
+            </div>
+          </CardHeader>
+        </Card>
+
+        <Divider />
+        {/* 알림 설정 */}
+        <Card>
+          <CardHeader style={{ padding: "10px 15px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <CardTitle>알림</CardTitle>
+              <TagChip style={{ cursor: "default" }}>{pushStatus}</TagChip>
+            </div>
+            <div
+              className={seg.root}
+              role="tablist"
+              aria-label="알림 설정"
+              style={{ margin: 0, minWidth: 130 }}
+            >
+              {/* 켜기 */}
+              <input
+                className={seg.radio}
+                type="radio"
+                id="notif-on"
+                name="notif"
+                checked={pushStatus === "등록됨"}
+                onChange={onEnablePush}
+              />
+              <label
+                className={seg.label}
+                htmlFor="notif-on"
+                role="tab"
+                aria-selected={pushStatus === "등록됨"}
+              >
+                켜기
+              </label>
+              {/* 끄기 */}
+              <input
+                className={seg.radio}
+                type="radio"
+                id="notif-off"
+                name="notif"
+                checked={pushStatus !== "등록됨"}
+                onChange={async () => {
+                  try {
+                    await disablePush();
+                  } catch {}
+                  // 권한은 유지될 수 있으므로 상태는 '허용됨'으로 둠
+                  setPushStatus(
+                    typeof Notification !== "undefined" &&
+                      Notification.permission === "granted"
+                      ? "허용됨"
+                      : "미설정"
+                  );
+                }}
+              />
+              <label
+                className={seg.label}
+                htmlFor="notif-off"
+                role="tab"
+                aria-selected={pushStatus !== "등록됨"}
+              >
+                끄기
               </label>
             </div>
           </CardHeader>
         </Card>
 
         <Divider />
-        {/* 알림 설정 (한 줄) */}
-        <Card style={{ height: 70, margin: 0 }}>
-          <CardHeader
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 12,
-              flexWrap: "wrap",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <CardTitle style={{ margin: 0 }}>알림</CardTitle>
-              <TagChip style={{ cursor: "default" }}>{pushStatus}</TagChip>
-            </div>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <button
-                className={form.btn}
-                onClick={onEnablePush}
-                disabled={pushStatus === "등록됨"}
-              >
-                푸시 알림 허용
-              </button>
-              <button className={form.btn} onClick={onRetryRegister}>
-                등록 재시도
-              </button>
-            </div>
-          </CardHeader>
-        </Card>
-
-        <Divider />
         {/* 데이터 (한 줄) */}
-        <Card style={{ height: 70, margin: 0 }}>
+        <Card>
           <CardHeader
             style={{
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
               gap: 12,
+              padding: "10px 15px",
             }}
           >
             <CardTitle style={{ margin: 0 }}>데이터</CardTitle>

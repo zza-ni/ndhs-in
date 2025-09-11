@@ -5,6 +5,7 @@ import {
   isSupported as analyticsSupported,
 } from "firebase/analytics";
 import { getMessaging, getToken } from "firebase/messaging";
+import { deleteToken } from "firebase/messaging";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCeqeuQkTb3wioxIogkn7hcUQz9FP2K1XA",
@@ -199,6 +200,32 @@ export async function requestPushPermission() {
 export async function tryEnsurePushRegistered() {
   const fcmOk = await trySaveTokenIfGranted();
   return !!fcmOk;
+}
+
+// 푸시 끄기: FCM 토큰 삭제 및 로컬 상태 초기화
+export async function disablePush() {
+  await initFirebase();
+  try {
+    if (!messaging) return;
+    const registration = await navigator.serviceWorker.ready;
+    // deleteToken can take options in some envs; call plain then fallback
+    let deleted = false;
+    try {
+      deleted = await deleteToken(messaging);
+    } catch {
+      // try with registration scope (older SDKs ignore options)
+      try {
+        deleted = await deleteToken(messaging, {
+          serviceWorkerRegistration: registration,
+        });
+      } catch {}
+    }
+  } finally {
+    try {
+      localStorage.removeItem("savedPushToken");
+      localStorage.removeItem("pushRegistered");
+    } catch {}
+  }
 }
 
 // auto-run minimal init once on module load
