@@ -8,7 +8,7 @@ import {
   NoticeListSkeleton,
   EquipmentsSkeleton,
 } from "../components/ui/Skeletons";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
 import { useToast } from "../components/ui/Toast.jsx";
 import {
@@ -75,6 +75,7 @@ const formatNoticeDate = (yyyymmddHHMMSS) => {
 };
 
 export default function HomePage() {
+  const navigate = useNavigate();
   const toast = useToast();
   const API_ENDPOINT = import.meta.env.VITE_API_ENDPOINT;
   const NOTICE_API = `${API_ENDPOINT.replace(/\/$/, "")}/boards/notice`;
@@ -255,9 +256,7 @@ export default function HomePage() {
           {/* 1) 현재 active된 메뉴 */}
           <Card
             as="article"
-            onClick={() => {
-              location.href = "/menu";
-            }}
+            onClick={() => navigate("/menu")}
             style={{ cursor: "pointer" }}
           >
             <CardHeader>
@@ -298,9 +297,7 @@ export default function HomePage() {
           {/* 2) 공지사항 최신 글 3개 */}
           <Card as="article">
             <CardHeader
-              onClick={() => {
-                location.href = "/notice";
-              }}
+              onClick={() => navigate("/notice")}
               style={{ cursor: "pointer" }}
             >
               <CardTitle>공지사항</CardTitle>
