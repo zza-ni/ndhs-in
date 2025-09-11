@@ -313,7 +313,7 @@ export default function PWAInstallPrompt() {
                   &nbsp; 버튼을 누르고{" "}
                   <b style={{ color: "blue" }}>홈 화면에 추가하기</b>
                 </p>
-              ) : (
+              ) : isKakaoInAppBrowser() ? (
                 <div>
                   <p>
                     1.&nbsp;&nbsp;
@@ -325,6 +325,24 @@ export default function PWAInstallPrompt() {
                     />{" "}
                     &nbsp; 버튼을 누르고{" "}
                     <b style={{ color: "blue" }}>Safari로 열기</b>
+                  </p>
+                  <p>
+                    2.&nbsp;&nbsp;
+                    <img
+                      src="/src/ios-share.png"
+                      alt="공유 버튼"
+                      width="15"
+                      style={{ verticalAlign: "middle" }}
+                    />{" "}
+                    &nbsp; 버튼을 누르고{" "}
+                    <b style={{ color: "blue" }}>홈 화면에 추가하기</b>
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <p>
+                    1. 링크 복사 후,&nbsp;
+                    <b style={{ color: "blue" }}>Safari에서 열기</b>
                   </p>
                   <p>
                     2.&nbsp;&nbsp;
