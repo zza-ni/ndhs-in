@@ -255,7 +255,20 @@ function AppShell() {
       {/* Global prompts */}
       <PWAInstallPrompt />
       <PushPermissionPrompt />
-      {showNav && <BottomNav />}
+      {showNav && (
+        <>
+          <div
+            aria-hidden
+            style={{
+              height: "0px",
+              width: 0,
+              overflow: "hidden",
+              position: "absolute",
+            }}
+          />
+          <BottomNav />
+        </>
+      )}
     </>
   );
 }

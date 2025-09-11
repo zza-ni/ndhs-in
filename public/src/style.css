@@ -207,6 +207,13 @@ body {
   margin: 0 auto;
 }
 
+/* Ensure bottom nav doesn't cover the end of scrollable content */
+.page-content .container {
+  padding-bottom: calc(
+    110px + env(safe-area-inset-bottom, 0)
+  ); /* nav height + spacing */
+}
+
 .home-cards {
   display: grid;
   gap: 14px;
@@ -453,10 +460,8 @@ body {
 
 .page-content .container {
   flex: 1 1 auto;
-  overflow: auto;
-  /* only this area scrolls */
-  padding: 12px 0 96px;
-  /* bottom padding for bottom-nav */
+  overflow: auto; /* only this area scrolls */
+  padding: 12px 0 calc(165px + env(safe-area-inset-bottom, 24px));
   scroll-behavior: smooth;
 }
 
@@ -912,6 +917,13 @@ body.modal-open {
 .page-content.fade-in {
   opacity: 1;
   transform: translateY(0);
+}
+
+/* Optional spacer element if a page needs explicit bottom breathing room */
+.bottom-safe-spacer {
+  height: calc(90px + env(safe-area-inset-bottom, 0));
+  width: 100%;
+  pointer-events: none;
 }
 
 @media (max-width: 680px) {
