@@ -1,6 +1,10 @@
 import React from "react";
 
-export default function PullToRefreshOverlay({ visible, progress = 0, reached = false }) {
+export default function PullToRefreshOverlay({
+  visible,
+  progress = 0,
+  reached = false,
+}) {
   const size = 28;
   const stroke = 3;
   const r = (size - stroke) / 2;
@@ -59,7 +63,9 @@ export default function PullToRefreshOverlay({ visible, progress = 0, reached = 
             transform={`rotate(-90 ${size / 2} ${size / 2})`}
           />
           <g
-            transform={`translate(${size / 2} ${size / 2}) rotate(${reached ? 180 : 0}) translate(${-size / 2} ${-size / 2})`}
+            transform={`translate(${size / 2} ${size / 2}) rotate(${
+              reached ? 180 : 0
+            }) translate(${-size / 2} ${-size / 2})`}
           >
             <path
               d={`M ${size / 2} ${size / 2 - 6} v 8 m -4 -4 l 4 4 l 4 -4`}

@@ -382,7 +382,12 @@ export default function App() {
         try {
           if ("vibrate" in navigator) navigator.vibrate(30);
         } catch {}
-        // soft reload
+        // show preloader on top and mark reload
+        try {
+          sessionStorage.setItem("appReloading", "1");
+          const el = document.getElementById("preloader");
+          if (el) el.classList.add("visible");
+        } catch {}
         window.location.reload();
       }
       maybePull = false;

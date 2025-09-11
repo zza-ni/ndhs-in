@@ -100,6 +100,31 @@
   --meal-time-opacity: 0.8;
 }
 
+/* Preloader overlay for app reloads */
+.app-preloader {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: var(--font-color, #111);
+}
+.app-preloader.visible {
+  display: flex;
+}
+.app-preloader-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  border: 1px solid var(--disable-color, #e0e0e0);
+  padding: 10px 14px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  background: var(--white, #fff);
+}
 html,
 body {
   height: 100%;
@@ -163,13 +188,6 @@ body {
   font-weight: 800;
   color: var(--main-font-color);
   line-height: 1;
-}
-
-@media (max-width: 420px) {
-  .header {
-    padding: 10px 12px;
-    border-radius: 12px;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

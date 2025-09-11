@@ -43,6 +43,11 @@ function registerServiceWorkers() {
         navigator.serviceWorker.addEventListener("controllerchange", () => {
           if (reloading) return;
           reloading = true;
+          try {
+            sessionStorage.setItem("appReloading", "1");
+            const el = document.getElementById("preloader");
+            if (el) el.classList.add("visible");
+          } catch {}
           location.reload();
         });
       });

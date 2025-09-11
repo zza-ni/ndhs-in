@@ -260,6 +260,44 @@
     />
   </head>
   <body>
+    <div id="preloader" class="app-preloader">
+      <div class="app-preloader-box">
+        <svg width="22" height="22" viewBox="0 0 50 50" aria-hidden="true">
+          <circle
+            cx="25"
+            cy="25"
+            r="20"
+            stroke="#e0e0e0"
+            stroke-width="6"
+            fill="none"
+          ></circle>
+          <path
+            d="M25 5 a20 20 0 0 1 0 40"
+            stroke="var(--focus-color,#1976d2)"
+            stroke-width="6"
+            fill="none"
+            stroke-linecap="round"
+          >
+            <animateTransform
+              attributeName="transform"
+              type="rotate"
+              from="0 25 25"
+              to="360 25 25"
+              dur="0.9s"
+              repeatCount="indefinite"
+            />
+          </path>
+        </svg>
+        <span>새로고침 중…</span>
+      </div>
+    </div>
+    <script>
+      try {
+        if (sessionStorage.getItem("appReloading") === "1") {
+          document.getElementById("preloader").classList.add("visible");
+        }
+      } catch (e) {}
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
