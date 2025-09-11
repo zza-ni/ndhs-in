@@ -493,7 +493,8 @@ body.modal-open .page-content .container {
   transform: translateX(-50%);
   min-width: 320px;
   max-width: 90vw;
-  background: var(--focus-color);
+  /* background: var(--focus-color); */
+  background: #ff424e;
   /* #054a2d */
   color: var(--white);
   border-radius: 16px;

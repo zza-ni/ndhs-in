@@ -43,6 +43,34 @@ export default function PWAInstallPrompt() {
   const snackTimerRef = React.useRef(null);
   const installingRef = React.useRef(false);
   const fallbackTimerRef = React.useRef(null);
+  const HIDE_KEY = "pwa-snackbar-hide-until";
+
+  const getHideUntil = React.useCallback(() => {
+    try {
+      if (typeof window === "undefined") return 0;
+      const raw = window.localStorage.getItem(HIDE_KEY);
+      const ts = raw ? parseInt(raw, 10) : 0;
+      return Number.isFinite(ts) ? ts : 0;
+    } catch {
+      return 0;
+    }
+  }, []);
+
+  const isSuppressedNow = React.useCallback(() => {
+    try {
+      return Date.now() < getHideUntil();
+    } catch {
+      return false;
+    }
+  }, [getHideUntil]);
+
+  const suppressForHours = (hours) => {
+    try {
+      if (typeof window === "undefined") return;
+      const until = Date.now() + hours * 60 * 60 * 1000;
+      window.localStorage.setItem(HIDE_KEY, String(until));
+    } catch {}
+  };
 
   const isInstalled = React.useMemo(() => {
     try {
@@ -71,14 +99,16 @@ export default function PWAInstallPrompt() {
     // iOS fallback: show snackbar after a short delay with manual install guidance
     if (isiOS()) {
       if (snackTimerRef.current) clearTimeout(snackTimerRef.current);
-      snackTimerRef.current = setTimeout(() => setShowSnack(true), 1500);
+      snackTimerRef.current = setTimeout(() => {
+        if (!isSuppressedNow()) setShowSnack(true);
+      }, 3000);
     }
     // Android fallback: show snackbar after a delay if event hasn't fired yet
     if (!isiOS()) {
       if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
       fallbackTimerRef.current = setTimeout(() => {
-        if (!deferred) setShowSnack(true);
-      }, 1500);
+        if (!deferred && !isSuppressedNow()) setShowSnack(true);
+      }, 3000);
     }
 
     const onBefore = (e) => {
@@ -88,7 +118,9 @@ export default function PWAInstallPrompt() {
       setDeferred(e);
       // Delay showing the snackbar to avoid popping in immediately on load
       if (snackTimerRef.current) clearTimeout(snackTimerRef.current);
-      snackTimerRef.current = setTimeout(() => setShowSnack(true), 1500);
+      snackTimerRef.current = setTimeout(() => {
+        if (!isSuppressedNow()) setShowSnack(true);
+      }, 3000);
     };
     const onInstalled = () => {
       setDeferred(null);
@@ -134,7 +166,7 @@ export default function PWAInstallPrompt() {
         fallbackTimerRef.current = null;
       }
     };
-  }, []);
+  }, [isSuppressedNow]);
 
   const requestInstall = async () => {
     if (isiOS()) {
@@ -181,6 +213,24 @@ export default function PWAInstallPrompt() {
     }
   };
 
+  const closeSnackbar = (e) => {
+    try {
+      e && e.stopPropagation && e.stopPropagation();
+    } catch {}
+    setShowSnack(false);
+    // Remember dismissal for 12 hours
+    suppressForHours(12);
+    // Clear any pending timers that might reshow it quickly on this session
+    if (snackTimerRef.current) {
+      clearTimeout(snackTimerRef.current);
+      snackTimerRef.current = null;
+    }
+    if (fallbackTimerRef.current) {
+      clearTimeout(fallbackTimerRef.current);
+      fallbackTimerRef.current = null;
+    }
+  };
+
   return (
     <>
       {/* Snackbar */}
@@ -196,6 +246,29 @@ export default function PWAInstallPrompt() {
             </div>
             <button id="snackbar-install-btn" onClick={requestInstall}>
               설치
+            </button>
+            <button
+              id="snackbar-close-btn"
+              aria-label="닫기"
+              title="닫기"
+              onClick={closeSnackbar}
+              style={{
+                position: "absolute",
+                top: 6,
+                right: 6,
+                width: 22,
+                height: 22,
+                border: "none",
+                background: "transparent",
+                color: "#ffffffcc",
+                fontSize: 16,
+                lineHeight: 1,
+                padding: 0,
+                cursor: "pointer",
+                zIndex: 1,
+              }}
+            >
+              ✕
             </button>
           </div>
         </div>

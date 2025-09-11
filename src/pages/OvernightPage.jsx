@@ -1,9 +1,11 @@
 import React from "react";
+import { useToast } from "../components/ui/Toast.jsx";
 import PageHeader from "../components/PageHeader";
 import { Card, CardHeader, CardTitle, CardBody } from "../components/ui/Card";
 import form from "../components/ui/Form.module.css";
 
 export default function OvernightPage() {
+  const toast = useToast();
   // 오늘 날짜 yyyy-mm-dd
   const today = React.useMemo(() => {
     const d = new Date();
@@ -27,9 +29,11 @@ export default function OvernightPage() {
   React.useEffect(() => {
     if (returnDate < tomorrow) {
       setDateError("복귀 예정일은 내일 이후여야 합니다.");
+      toast?.show("복귀 예정일은 내일 이후여야 합니다.", { type: "error" });
     } else {
       setDateError("");
     }
+    // eslint-disable-next-line
   }, [returnDate, tomorrow]);
 
   return (
@@ -54,20 +58,18 @@ export default function OvernightPage() {
                 onChange={(e) => setReturnDate(e.target.value)}
               />
             </div>
-            {dateError && (
-              <div
-                role="alert"
-                style={{ color: "var(--danger-color, #d32f2f)", fontSize: 12 }}
-              >
-                {dateError}
-              </div>
-            )}
-            <label style={{ fontWeight: 700 }}>사유(장소)</label>
-            <textarea
-              className={form.textarea}
-              rows={4}
-              placeholder="예시: 귀향(광주), 도서관(혜화역) 등"
-            />
+            {/* 오류 메시지는 토스트로 대체 */}
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <label style={{ fontWeight: 700, minWidth: 60, marginBottom: 0 }}>
+                사유 (장소)
+              </label>
+              <input
+                className={form.input}
+                style={{ flex: 1 }}
+                type="text"
+                placeholder="귀향(광주), 도서관(혜화역) 등"
+              />
+            </div>
             <div style={{ display: "flex", justifyContent: "flex-end" }}>
               <button
                 className={form.btn}

@@ -1,4 +1,5 @@
 import React from "react";
+import { useToast } from "../components/ui/Toast.jsx";
 import PageHeader from "../components/PageHeader";
 import Divider from "../components/ui/Divider";
 import {
@@ -32,6 +33,7 @@ import {
 } from "../lib/htmlUtils";
 
 export default function BoardPage() {
+  const toast = useToast();
   // 상태 최소화 및 역할 분리
   const [items, setItems] = React.useState([]); // 게시판 탭 데이터
   const [loading, setLoading] = React.useState(true);
@@ -235,9 +237,10 @@ export default function BoardPage() {
           ...prev,
           [key]: { ...(prev[key] || {}), loading: false, error: "load" },
         }));
+        toast?.show("댓글을 불러오지 못했어요.", { type: "error" });
       }
     },
-    [commentsByPost]
+    [commentsByPost, toast]
   );
 
   // 추천(좋아요)
@@ -312,14 +315,20 @@ export default function BoardPage() {
         }
       } catch (e) {
         if (!cancelled) {
-          if (activeTab === "notice")
-            setNoticeError(
-              "공지사항을 불러오지 못했습니다. 잠시 후 다시 시도해주세요."
+          if (activeTab === "notice") {
+            toast?.show(
+              "공지사항을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.",
+              { type: "error" }
             );
-          else
-            setError(
-              "게시글을 불러오지 못했습니다. 잠시 후 다시 시도해주세요."
+            setNoticeError("");
+            setNoticeLoading(false);
+          } else {
+            toast?.show(
+              "게시글을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.",
+              { type: "error" }
             );
+            setError("");
+          }
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -639,15 +648,28 @@ export default function BoardPage() {
         content,
         tag: tag.trim() || undefined,
       });
-      // 목록 최상단에 추가
-      setItems((prev) => [created, ...prev]);
+      // 방금 작성한 글을 서버에서 다시 불러와 정규화된 데이터로 반영
+      let hydrated = created;
+      try {
+        const postId = created?.id || created?.post_id;
+        if (postId) {
+          const full = await fetchSinglePost(postId, false);
+          if (full) hydrated = full;
+        }
+      } catch {}
+      const nextItems = [hydrated, ...(items || [])];
+      setItems(nextItems);
+      // 캐시도 함께 갱신
+      try {
+        setBoardListCache({ items: nextItems, cursor, hasMore });
+      } catch {}
       setTitle("");
       setContent("");
       setTag(TAGS[0]);
       // 글쓰기 폼 닫기
       setWriteFormOpen(false);
     } catch {
-      alert("글쓰기에 실패했어요.");
+      toast?.show("글쓰기에 실패했어요.", { type: "error" });
     } finally {
       setSubmitting(false);
     }
@@ -659,17 +681,30 @@ export default function BoardPage() {
       const res = await createComment(post.id || post.post_id, {
         content: text.trim(),
       });
-      // 댓글 수 반영(간단히 count만 증가 처리, 필요시 상세 구조 반영)
+      // 성공 후 최신 댓글 목록을 서버에서 다시 로드하여 반영
+      const pid = post.id || post.post_id;
+      const list = await fetchComments(pid);
+      const key = String(pid);
+      setCommentsByPost((prev) => ({
+        ...prev,
+        [key]: { ...(prev[key] || {}), items: list, loading: false, error: "" },
+      }));
+      // 댓글 수를 실제 길이로 동기화
       setItems((prev) =>
         prev.map((p) =>
-          p === post || (p.id || p.post_id) === (post.id || post.post_id)
-            ? { ...p, comments_count: (p.comments_count || 0) + 1 }
+          p === post || (p.id || p.post_id) === pid
+            ? {
+                ...p,
+                comments_count: Array.isArray(list)
+                  ? list.length
+                  : p.comments_count || 0,
+              }
             : p
         )
       );
-      return res;
+      return true;
     } catch {
-      alert("댓글 등록에 실패했어요.");
+      toast?.show("댓글 등록에 실패했어요.", { type: "error" });
     }
   };
 
@@ -685,7 +720,7 @@ export default function BoardPage() {
         )
       );
     } catch {
-      alert("추천에 실패했어요.");
+      toast?.show("추천에 실패했어요.", { type: "error" });
     } finally {
       setLikingId(null);
     }
@@ -728,6 +763,12 @@ export default function BoardPage() {
               role="tab"
               aria-selected={activeTab === "notice"}
               tabIndex={0}
+              onClick={() => {
+                // If already on notice in single-post mode, go to list
+                if (activeTab !== "notice") setActiveTab("notice");
+                window.history.replaceState({}, "", "/notice");
+                setLocationPath("/notice");
+              }}
             >
               공지사항
             </label>
@@ -749,6 +790,11 @@ export default function BoardPage() {
               role="tab"
               aria-selected={activeTab === "board"}
               tabIndex={0}
+              onClick={() => {
+                if (activeTab !== "board") setActiveTab("board");
+                window.history.replaceState({}, "", "/board");
+                setLocationPath("/board");
+              }}
             >
               게시판
             </label>
@@ -1017,20 +1063,7 @@ export default function BoardPage() {
                             })()}
                             <BoardCommentBox
                               onSubmit={async (text) => {
-                                const res = await onCommentSubmit(it, text);
-                                if (res) {
-                                  const key = String(it.id || it.post_id);
-                                  setCommentsByPost((prev) => {
-                                    const cur = prev[key] || {};
-                                    const items = Array.isArray(cur.items)
-                                      ? [...cur.items, res]
-                                      : [res];
-                                    return {
-                                      ...prev,
-                                      [key]: { ...cur, items },
-                                    };
-                                  });
-                                }
+                                await onCommentSubmit(it, text);
                               }}
                             />
                           </>
@@ -1041,6 +1074,37 @@ export default function BoardPage() {
                 })}
             </div>
           )}
+        {/* 단일 게시물 모드: 목록으로 돌아가기 버튼 */}
+        {urlPostId && (
+          <>
+            <Divider />
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                padding: "8px 12px 16px",
+              }}
+            >
+              <button
+                className={form.btn}
+                onClick={() => {
+                  const dest = activeTab === "notice" ? "/notice" : "/board";
+                  setOpenId(null);
+                  // reset scroll and path to list
+                  try {
+                    if (scrollRef.current) scrollRef.current.scrollTop = 0;
+                  } catch {}
+                  window.history.replaceState({}, "", dest);
+                  setLocationPath(dest);
+                }}
+                aria-label="목록으로 돌아가기"
+                title="목록으로 돌아가기"
+              >
+                ← 목록으로 돌아가기
+              </button>
+            </div>
+          </>
+        )}
         {!urlPostId && (
           <>
             <div ref={sentinelRef} style={{ height: 1 }} />
