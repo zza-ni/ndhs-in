@@ -7,6 +7,7 @@ import {
   CardSkeleton,
   CardError,
   LoadMoreSkeleton,
+  AccordionListSkeleton,
 } from "../components/ui/Skeletons";
 import { TagChip } from "../components/ui/Chip";
 import TagBar from "../components/TagBar";
@@ -317,13 +318,7 @@ export default function NoticePage() {
           />
         )}
 
-        {loading && (
-          <>
-            {[0, 1, 2].map((i) => (
-              <CardSkeleton key={i} withTitle lines={2} />
-            ))}
-          </>
-        )}
+        {loading && <AccordionListSkeleton items={3} />}
         <CardError message={error} />
         {!loading && !error && items.length === 0 && postId && (
           <div className="empty-state">해당 공지를 찾을 수 없습니다.</div>

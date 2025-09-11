@@ -5,6 +5,7 @@ import {
   CardSkeleton,
   CardError,
   LoadMoreSkeleton,
+  AccordionListSkeleton,
 } from "../components/ui/Skeletons";
 import styles from "./BoardPage.module.css";
 import acc from "../components/ui/Accordion.module.css";
@@ -844,18 +845,10 @@ export default function BoardPage() {
         )}
 
         {activeTab === "board" && loading && (
-          <>
-            {[0, 1, 2].map((i) => (
-              <CardSkeleton key={i} withTitle lines={2} />
-            ))}
-          </>
+          <AccordionListSkeleton items={3} />
         )}
         {activeTab === "notice" && noticeLoading && (
-          <>
-            {[0, 1].map((i) => (
-              <CardSkeleton key={i} withTitle lines={1} />
-            ))}
-          </>
+          <AccordionListSkeleton items={2} />
         )}
         <CardError message={activeTab === "board" ? error : noticeError} />
         {!loading &&
