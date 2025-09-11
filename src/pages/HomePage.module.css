@@ -14,3 +14,16 @@
   font-size: 10px;
   text-align: center;
 }
+.genderButton {
+  font-weight: 700;
+  border: none;
+  padding: 3px 10px;
+  cursor: pointer;
+  box-shadow: 0 1px 5px var(--shadow);
+  background: var(--disable-color);
+  color: var(--date-font-color);
+}
+button[aria-selected="true"] {
+  background: var(--white);
+  color: var(--focus-date-font-color);
+}

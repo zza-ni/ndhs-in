@@ -253,7 +253,13 @@ export default function HomePage() {
       <div className="container">
         <section className="home-cards">
           {/* 1) 현재 active된 메뉴 */}
-          <Card as="article">
+          <Card
+            as="article"
+            onClick={() => {
+              location.href = "/menu";
+            }}
+            style={{ cursor: "pointer" }}
+          >
             <CardHeader>
               <div className="card-title-row">
                 <CardTitle>식단</CardTitle>
@@ -291,7 +297,12 @@ export default function HomePage() {
 
           {/* 2) 공지사항 최신 글 3개 */}
           <Card as="article">
-            <CardHeader>
+            <CardHeader
+              onClick={() => {
+                location.href = "/notice";
+              }}
+              style={{ cursor: "pointer" }}
+            >
               <CardTitle>공지사항</CardTitle>
               <Link className="card-link" to="/notice" aria-label="공지 더보기">
                 →
@@ -346,25 +357,16 @@ export default function HomePage() {
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
-                  border: "1px solid var(--disable-color)",
                   borderRadius: 999,
                   overflow: "hidden",
-                  background: "#fff",
                 }}
               >
                 <button
                   type="button"
                   role="tab"
                   aria-selected={gender === "m"}
+                  className={styles.genderButton}
                   onClick={() => handleGenderSelect("m")}
-                  style={{
-                    padding: "3px 10px",
-                    border: "none",
-                    background:
-                      gender === "m" ? "var(--focus-color)" : "transparent",
-                    color: gender === "m" ? "#fff" : "inherit",
-                    cursor: "pointer",
-                  }}
                   title="남자 세탁실"
                 >
                   남
@@ -373,15 +375,8 @@ export default function HomePage() {
                   type="button"
                   role="tab"
                   aria-selected={gender === "f"}
+                  className={styles.genderButton}
                   onClick={() => handleGenderSelect("f")}
-                  style={{
-                    padding: "3px 10px",
-                    border: "none",
-                    background:
-                      gender === "f" ? "var(--focus-color)" : "transparent",
-                    color: gender === "f" ? "#fff" : "inherit",
-                    cursor: "pointer",
-                  }}
                   title="여자 세탁실"
                 >
                   여

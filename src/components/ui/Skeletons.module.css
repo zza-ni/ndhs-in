@@ -2,12 +2,14 @@
   display: grid;
   gap: 10px;
   margin: 12px 0;
+  width: 100%;
 }
 .card {
   background: var(--white);
   border: 1.5px solid var(--disable-color);
   border-radius: 12px;
   padding: 12px;
+  width: 74%;
 }
 .row {
   display: flex;
@@ -91,6 +93,10 @@
   display: grid;
   gap: 8px;
 }
+.noticeList {
+  width: 100%;
+  padding: 0 15px 15px;
+}
 .listItem {
   display: flex;
   align-items: center;
@@ -127,6 +133,7 @@
   display: flex;
   gap: 14px;
   flex-wrap: nowrap;
+  justify-content: space-between;
 }
 .equipItem {
   display: flex;

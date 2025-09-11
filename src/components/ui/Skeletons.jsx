@@ -47,7 +47,7 @@ export function MenuSkeleton() {
 // Home: Notice list (3 rows with optional tag chip and date)
 export function NoticeListSkeleton({ count = 3 }) {
   return (
-    <div className={styles.list} aria-hidden>
+    <div className={`${styles.list} ${styles.noticeList}`} aria-hidden>
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} className={styles.listItem}>
           <div className={styles.left}>
