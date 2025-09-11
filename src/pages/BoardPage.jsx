@@ -451,7 +451,7 @@ export default function BoardPage() {
       panelEl.removeEventListener("transitionend", onTransitionEnd);
     };
     panelEl.addEventListener("transitionend", onTransitionEnd);
-    if (getComputedStyle(panelEl).maxHeight === "1200px") {
+    if (getComputedStyle(panelEl).maxHeight === "2000px") {
       setTimeout(() => {
         if (!scrolled) {
           hydrateImagesInElement(panelEl, { eager: false });
@@ -701,6 +701,7 @@ export default function BoardPage() {
           style={{ position: "absolute", left: -9999 }}
           ref={liveRegionRef}
         />
+        {/* 공지사항 / 게시판 선택 segmanted */}
         <div className={styles.segmentedWrap}>
           <div
             className={seg.root}
@@ -845,10 +846,10 @@ export default function BoardPage() {
         )}
 
         {activeTab === "board" && loading && (
-          <AccordionListSkeleton items={3} />
+          <AccordionListSkeleton items={5} />
         )}
         {activeTab === "notice" && noticeLoading && (
-          <AccordionListSkeleton items={2} />
+          <AccordionListSkeleton items={5} />
         )}
         <CardError message={activeTab === "board" ? error : noticeError} />
         {!loading &&

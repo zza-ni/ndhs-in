@@ -176,7 +176,7 @@ export default function NoticePage() {
     };
     panelEl.addEventListener("transitionend", onTransitionEnd);
     // transition이 없거나 이미 열려있는 경우 대비
-    if (getComputedStyle(panelEl).maxHeight === "1200px") {
+    if (getComputedStyle(panelEl).maxHeight === "2000px") {
       setTimeout(() => {
         if (!scrolled) {
           // 즉시 하이드레이트 (lazy)
