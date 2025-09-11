@@ -16,6 +16,6 @@ createRoot(rootEl).render(
 // 앱이 마운트되면 프리로더 제거
 try {
   const pre = document.getElementById("preloader");
-  if (pre) pre.style.display = "none";
+  if (pre) pre.classList.remove("visible");
   sessionStorage.removeItem("appReloading");
 } catch {}

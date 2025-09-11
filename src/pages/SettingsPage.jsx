@@ -14,6 +14,44 @@ import { clearBoardListCache } from "../lib/boardCache";
 import { clearNoticeListCache } from "../lib/noticeCache";
 
 export default function SettingsPage() {
+  // PWA 설치 여부
+  const [isPWA, setIsPWA] = useState(() => {
+    try {
+      const mql =
+        typeof window !== "undefined" &&
+        window.matchMedia &&
+        window.matchMedia("(display-mode: standalone)");
+      const standalone = !!(mql && mql.matches);
+      const iosStandalone =
+        typeof navigator !== "undefined" &&
+        "standalone" in navigator &&
+        navigator.standalone;
+      const twa =
+        typeof document !== "undefined" &&
+        document.referrer &&
+        document.referrer.startsWith("android-app://");
+      return Boolean(standalone || iosStandalone || twa);
+    } catch {
+      return false;
+    }
+  });
+  useEffect(() => {
+    // One more pass after mount in case of late media query resolution
+    try {
+      const mql =
+        window.matchMedia && window.matchMedia("(display-mode: standalone)");
+      const standalone = !!(mql && mql.matches);
+      const iosStandalone =
+        typeof navigator !== "undefined" &&
+        "standalone" in navigator &&
+        navigator.standalone;
+      const twa =
+        typeof document !== "undefined" &&
+        document.referrer &&
+        document.referrer.startsWith("android-app://");
+      setIsPWA(Boolean(standalone || iosStandalone || twa));
+    } catch {}
+  }, []);
   // 테마: light | dark | system
   const [theme, setTheme] = useState(
     () => localStorage.getItem("theme") || "dark"
@@ -45,14 +83,14 @@ export default function SettingsPage() {
     }
     const perm = Notification.permission;
     if (perm === "granted") setPushStatus("허용됨");
-    else if (perm === "denied") setPushStatus("미허용");
+    else if (perm === "denied") setPushStatus("차단됨");
     else setPushStatus("미설정");
   }, []);
 
   const onEnablePush = async () => {
     const ok = await requestPushPermission();
     setPushStatus(
-      ok ? "등록됨" : Notification.permission === "denied" ? "미허용" : "허용됨"
+      ok ? "등록됨" : Notification.permission === "denied" ? "차단됨" : "허용됨"
     );
   };
 
@@ -64,7 +102,7 @@ export default function SettingsPage() {
         : Notification.permission === "granted"
         ? "허용됨"
         : Notification.permission === "denied"
-        ? "미허용"
+        ? "차단됨"
         : "미설정"
     );
   };
@@ -149,66 +187,105 @@ export default function SettingsPage() {
 
         <Divider />
         {/* 알림 설정 */}
-        <Card>
-          <CardHeader style={{ padding: "10px 15px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <CardTitle>알림</CardTitle>
-              <TagChip style={{ cursor: "default" }}>{pushStatus}</TagChip>
-            </div>
+        <div style={{ position: "relative" }}>
+          {/* Overlay blocks interaction when not a PWA */}
+          {!isPWA && (
             <div
-              className={seg.root}
-              role="tablist"
-              aria-label="알림 설정"
-              style={{ margin: 0, minWidth: 130 }}
+              aria-hidden
+              style={{
+                position: "absolute",
+                inset: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "rgba(0,0,0,0.7)",
+                zIndex: 2,
+                pointerEvents: "auto",
+              }}
+              onClick={() => {
+                try {
+                  window.dispatchEvent(new Event("pwa:install"));
+                } catch {
+                  // Fallback: noop
+                }
+              }}
             >
-              {/* 켜기 */}
-              <input
-                className={seg.radio}
-                type="radio"
-                id="notif-on"
-                name="notif"
-                checked={pushStatus === "등록됨"}
-                onChange={onEnablePush}
-              />
-              <label
-                className={seg.label}
-                htmlFor="notif-on"
-                role="tab"
-                aria-selected={pushStatus === "등록됨"}
-              >
-                켜기
-              </label>
-              {/* 끄기 */}
-              <input
-                className={seg.radio}
-                type="radio"
-                id="notif-off"
-                name="notif"
-                checked={pushStatus !== "등록됨"}
-                onChange={async () => {
-                  try {
-                    await disablePush();
-                  } catch {}
-                  // 권한은 유지될 수 있으므로 상태는 '허용됨'으로 둠
-                  setPushStatus(
-                    typeof Notification !== "undefined" &&
-                      Notification.permission === "granted"
-                      ? "허용됨"
-                      : "미설정"
-                  );
+              <div
+                style={{
+                  background: "var(--white, #fff)",
+                  color: "#111",
+                  padding: "10px 14px",
+                  borderRadius: 12,
+                  boxShadow: "0 6px 24px rgba(0,0,0,0.18)",
+                  fontWeight: 800,
+                  fontSize: 14,
                 }}
-              />
-              <label
-                className={seg.label}
-                htmlFor="notif-off"
-                role="tab"
-                aria-selected={pushStatus !== "등록됨"}
               >
-                끄기
-              </label>
+                앱을 먼저 설치해주세요!
+              </div>
             </div>
-          </CardHeader>
-        </Card>
+          )}
+          <Card>
+            <CardHeader style={{ padding: "10px 15px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <CardTitle>알림</CardTitle>
+                <TagChip style={{ cursor: "default" }}>{pushStatus}</TagChip>
+              </div>
+              <div
+                className={seg.root}
+                role="tablist"
+                aria-label="알림 설정"
+                style={{ margin: 0, minWidth: 130 }}
+              >
+                {/* 켜기 */}
+                <input
+                  className={seg.radio}
+                  type="radio"
+                  id="notif-on"
+                  name="notif"
+                  checked={pushStatus === "등록됨"}
+                  onChange={onEnablePush}
+                />
+                <label
+                  className={seg.label}
+                  htmlFor="notif-on"
+                  role="tab"
+                  aria-selected={pushStatus === "등록됨"}
+                >
+                  켜기
+                </label>
+                {/* 끄기 */}
+                <input
+                  className={seg.radio}
+                  type="radio"
+                  id="notif-off"
+                  name="notif"
+                  checked={pushStatus !== "등록됨"}
+                  onChange={async () => {
+                    try {
+                      await disablePush();
+                    } catch {}
+                    // 권한은 유지될 수 있으므로 상태는 '허용됨'으로 둠
+                    setPushStatus(
+                      typeof Notification !== "undefined" &&
+                        Notification.permission === "granted"
+                        ? "허용됨"
+                        : "미설정"
+                    );
+                  }}
+                />
+                <label
+                  className={seg.label}
+                  htmlFor="notif-off"
+                  role="tab"
+                  aria-selected={pushStatus !== "등록됨"}
+                >
+                  끄기
+                </label>
+              </div>
+            </CardHeader>
+          </Card>
+        </div>
 
         <Divider />
         {/* 데이터 (한 줄) */}

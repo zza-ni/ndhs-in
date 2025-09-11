@@ -941,11 +941,22 @@ export default function BoardPage() {
                     >
                       <button
                         className={acc.header}
-                        onClick={() =>
-                          urlPostId
-                            ? null
-                            : setOpenId((cur) => (cur === id ? null : id))
-                        }
+                        onClick={() => {
+                          if (urlPostId) {
+                            // 단일 게시물 모드에서 제목(헤더) 클릭 시 목록으로 돌아가기 동작
+                            const dest =
+                              activeTab === "notice" ? "/notice" : "/board";
+                            setOpenId(null);
+                            try {
+                              if (scrollRef.current)
+                                scrollRef.current.scrollTop = 0;
+                            } catch {}
+                            window.history.replaceState({}, "", dest);
+                            setLocationPath(dest);
+                          } else {
+                            setOpenId((cur) => (cur === id ? null : id));
+                          }
+                        }}
                         aria-expanded={isOpen}
                         aria-controls={panelId}
                       >
@@ -1016,14 +1027,6 @@ export default function BoardPage() {
                                   <h4 className={styles.commentHeader}>
                                     댓글 {list.length || it.comments_count || 0}
                                   </h4>
-                                  {cloading && (
-                                    <div
-                                      className="muted"
-                                      style={{ margin: "8px 0" }}
-                                    >
-                                      댓글을 불러오는 중…
-                                    </div>
-                                  )}
                                   {cerror && (
                                     <div
                                       className="error"

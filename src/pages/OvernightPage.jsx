@@ -26,6 +26,22 @@ export default function OvernightPage() {
   const [dateError, setDateError] = React.useState("");
   const [reason, setReason] = React.useState("");
 
+  // 페이지 진입 시 안내 토스트 자동 표시 (10초)
+  React.useEffect(() => {
+    // Dev StrictMode에서 이펙트 2회 실행 방지용: 1초 내 중복 호출 차단
+    try {
+      const key = "__overnight_toast_block__";
+      const now = Date.now();
+      const last = typeof window !== "undefined" ? window[key] || 0 : 0;
+      if (now - last < 1000) return;
+      if (typeof window !== "undefined") window[key] = now;
+    } catch {}
+    toast?.show("남도학숙과 협의되지 않아 현재 외박 신청이 불가능해요.", {
+      type: "error",
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // 복귀 예정일 유효성 (일부 iOS에서 min 무시 가능성 방어)
   React.useEffect(() => {
     if (returnDate < tomorrow) {

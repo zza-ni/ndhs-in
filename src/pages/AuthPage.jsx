@@ -206,7 +206,7 @@ export default function AuthPage() {
                 />
                 <circle cx="12" cy="7.5" r="1.25" fill="currentColor" />
               </svg>
-              <div>남도인은 아이디, 비밀번호를 서버에 저장하지 않습니다.</div>
+              <div>남도인은 개인정보를 서버에 저장하지 않습니다.</div>
             </div>
             {/* 에러 메시지는 토스트로 대체 */}
             {success && (

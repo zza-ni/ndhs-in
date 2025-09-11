@@ -213,6 +213,18 @@ export default function PWAInstallPrompt() {
     }
   };
 
+  // Allow external triggers (e.g., Settings overlay) to invoke the same install flow
+  React.useEffect(() => {
+    const onTrigger = (e) => {
+      try {
+        e && e.stopPropagation && e.stopPropagation();
+      } catch {}
+      requestInstall();
+    };
+    window.addEventListener("pwa:install", onTrigger);
+    return () => window.removeEventListener("pwa:install", onTrigger);
+  }, [requestInstall]);
+
   const closeSnackbar = (e) => {
     try {
       e && e.stopPropagation && e.stopPropagation();
