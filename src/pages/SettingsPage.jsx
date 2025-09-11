@@ -325,6 +325,23 @@ export default function SettingsPage() {
             </div>
           </CardBody>
         </Card>
+
+        <Divider />
+        {/* 정보 */}
+        <Card
+          onClick={() => {
+            window.open(
+              "https://portal.ndhs.or.kr/index",
+              "_blank",
+              "noopener"
+            );
+          }}
+          style={{ cursor: "pointer" }}
+        >
+          <CardHeader style={{ padding: "14px 16px" }}>
+            <CardTitle>학사관리시스템 바로가기</CardTitle>
+          </CardHeader>
+        </Card>
       </div>
     </main>
   );
