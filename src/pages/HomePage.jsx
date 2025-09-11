@@ -359,6 +359,7 @@ export default function HomePage() {
                   alignItems: "center",
                   borderRadius: 999,
                   overflow: "hidden",
+                  border: "1.5px solid var(--disable-color)",
                 }}
               >
                 <button

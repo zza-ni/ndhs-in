@@ -16,6 +16,7 @@ import AuthPage from "./pages/AuthPage";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import PushPermissionPrompt from "./components/PushPermissionPrompt";
 import AdminPushTest from "./pages/AdminPushTest";
+import PullToRefreshOverlay from "./components/ui/PullToRefreshOverlay.jsx";
 
 // 공통 테마 적용 함수: 'light' | 'dark' | 'system'
 function applyTheme(mode) {
@@ -293,9 +294,134 @@ export default function App() {
     };
   }, []);
 
+  // Pull-to-refresh overlay state
+  const [ptrVisible, setPtrVisible] = React.useState(false);
+  const [ptrProgress, setPtrProgress] = React.useState(0);
+  const [ptrReached, setPtrReached] = React.useState(false);
+
+  // Global pull-to-refresh: pull down from top to reload
+  React.useEffect(() => {
+    let startY = 0;
+    let deltaY = 0;
+    let maybePull = false;
+    let scrollContainer = null;
+    let triggered = false;
+    const THRESHOLD = 68; // px to trigger reload
+    const ACTIVATE = 8; // px to show overlay
+
+    const getScrollableAncestor = (el) => {
+      try {
+        const docScroll = document.scrollingElement || document.documentElement;
+        while (el && el !== document.body && el !== document.documentElement) {
+          const style = window.getComputedStyle(el);
+          const oy = style.overflowY;
+          if (
+            (oy === "auto" || oy === "scroll") &&
+            el.scrollHeight > el.clientHeight
+          ) {
+            return el;
+          }
+          el = el.parentElement;
+        }
+        return docScroll;
+      } catch {
+        return document.documentElement;
+      }
+    };
+
+    const onTouchStart = (e) => {
+      if (triggered) return;
+      const t = e.touches && e.touches[0];
+      if (!t) return;
+      startY = t.clientY;
+      deltaY = 0;
+      scrollContainer = getScrollableAncestor(e.target);
+      // only consider if at the very top
+      const top = scrollContainer
+        ? scrollContainer.scrollTop || 0
+        : window.scrollY || 0;
+      maybePull = top <= 0;
+      // 초기 터치에서 오버레이는 보이지 않도록 유지
+      if (!maybePull) {
+        setPtrVisible(false);
+        setPtrProgress(0);
+        setPtrReached(false);
+      }
+    };
+
+    const onTouchMove = (e) => {
+      if (!maybePull || triggered) return;
+      const t = e.touches && e.touches[0];
+      if (!t) return;
+      deltaY = t.clientY - startY;
+      // if user scrolls up or container not at top anymore, cancel
+      const top = scrollContainer
+        ? scrollContainer.scrollTop || 0
+        : window.scrollY || 0;
+      if (deltaY <= 0 || top > 0) {
+        maybePull = false;
+        setPtrVisible(false);
+        setPtrProgress(0);
+        setPtrReached(false);
+        return;
+      }
+      // 오버레이는 약간 끌어내린 후에만 표시
+      if (deltaY > ACTIVATE && !ptrVisible) setPtrVisible(true);
+      const prog = Math.max(
+        0,
+        Math.min(1, (deltaY - ACTIVATE) / (THRESHOLD - ACTIVATE))
+      );
+      setPtrProgress(prog);
+      setPtrReached(prog >= 1);
+    };
+
+    const onTouchEnd = () => {
+      if (triggered) return;
+      if (maybePull && deltaY > THRESHOLD) {
+        triggered = true;
+        try {
+          if ("vibrate" in navigator) navigator.vibrate(30);
+        } catch {}
+        // soft reload
+        window.location.reload();
+      }
+      maybePull = false;
+      deltaY = 0;
+      startY = 0;
+      scrollContainer = null;
+      // 오버레이가 보이지 않았던 탭/짧은 터치의 경우 즉시 숨김
+      if (!ptrVisible) {
+        setPtrVisible(false);
+        setPtrProgress(0);
+        setPtrReached(false);
+      } else {
+        // 살짝 애니메이션 여유
+        setTimeout(() => {
+          setPtrVisible(false);
+          setPtrProgress(0);
+          setPtrReached(false);
+        }, 100);
+      }
+    };
+
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: true });
+    window.addEventListener("touchend", onTouchEnd, { passive: true });
+    return () => {
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onTouchEnd);
+    };
+  }, []);
+
   return (
     <BrowserRouter>
       <AppShell />
+      <PullToRefreshOverlay
+        visible={ptrVisible}
+        progress={ptrProgress}
+        reached={ptrReached}
+      />
     </BrowserRouter>
   );
 }
