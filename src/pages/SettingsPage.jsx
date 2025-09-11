@@ -327,7 +327,7 @@ export default function SettingsPage() {
         </Card>
 
         <Divider />
-        {/* 정보 */}
+        {/* 포털 바로가기 */}
         <Card
           onClick={() => {
             window.open(

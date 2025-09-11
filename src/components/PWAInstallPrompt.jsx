@@ -23,6 +23,10 @@ const isSafari = () => {
 
 // Capture early fired beforeinstallprompt events so we don't miss them on mobile
 let earlyBIPEvent = null;
+// Track if we have already consumed (prompted) once on this page load
+if (typeof window !== "undefined" && !window.__pwaInstallUsed) {
+  window.__pwaInstallUsed = false;
+}
 if (typeof window !== "undefined") {
   window.addEventListener(
     "beforeinstallprompt",
@@ -173,6 +177,26 @@ export default function PWAInstallPrompt() {
       setShowIOSModal(true);
       return;
     }
+    // If we've already used the install prompt on this page and no deferred/early event is available anymore,
+    // we must reload to obtain a fresh beforeinstallprompt event (Chrome policy: one prompt per page load).
+    if (
+      !deferred &&
+      !earlyBIPEvent &&
+      typeof window !== "undefined" &&
+      window.__pwaInstallUsed
+    ) {
+      try {
+        sessionStorage.setItem("pwaInstallAfterReload", "1");
+        // Reuse existing preloader if present
+        try {
+          sessionStorage.setItem("appReloading", "1");
+          const pre = document.getElementById("preloader");
+          if (pre) pre.classList.add("visible");
+        } catch {}
+      } catch {}
+      window.location.reload();
+      return;
+    }
     // Android: if event not yet available, wait briefly for it then prompt immediately
     if (!deferred) {
       if (installingRef.current) return; // avoid duplicate waits
@@ -207,6 +231,12 @@ export default function PWAInstallPrompt() {
     try {
       deferred.prompt();
       await deferred.userChoice;
+      if (typeof window !== "undefined") {
+        window.__pwaInstallUsed = true;
+        try {
+          sessionStorage.setItem("pwaInstallUsed", "1");
+        } catch {}
+      }
     } finally {
       setDeferred(null);
       setShowSnack(false);
@@ -224,6 +254,20 @@ export default function PWAInstallPrompt() {
     window.addEventListener("pwa:install", onTrigger);
     return () => window.removeEventListener("pwa:install", onTrigger);
   }, [requestInstall]);
+
+  // If we reloaded explicitly to retry install, show snackbar immediately (skip delay)
+  React.useEffect(() => {
+    try {
+      if (
+        !isInstalled &&
+        sessionStorage.getItem("pwaInstallAfterReload") === "1"
+      ) {
+        sessionStorage.removeItem("pwaInstallAfterReload");
+        // Show snackbar right away; earlyBIPEvent may arrive shortly (captured globally)
+        setShowSnack(true);
+      }
+    } catch {}
+  }, [isInstalled]);
 
   const closeSnackbar = (e) => {
     try {
