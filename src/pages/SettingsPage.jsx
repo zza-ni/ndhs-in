@@ -219,6 +219,7 @@ export default function SettingsPage() {
                   boxShadow: "0 6px 24px rgba(0,0,0,0.18)",
                   fontWeight: 800,
                   fontSize: 14,
+                  cursor: "pointer",
                 }}
               >
                 앱을 먼저 설치해주세요!
