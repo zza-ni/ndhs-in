@@ -16,6 +16,7 @@ import AuthPage from "./pages/AuthPage";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import PushPermissionPrompt from "./components/PushPermissionPrompt";
 import AdminPushTest from "./pages/AdminPushTest";
+import AdminBoard from "./pages/AdminBoard";
 import PullToRefreshOverlay from "./components/ui/PullToRefreshOverlay.jsx";
 
 // 공통 테마 적용 함수: 'light' | 'dark' | 'system'
@@ -246,7 +247,8 @@ function AppShell() {
         <Route path="/board/:postId" element={<BoardPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/auth" element={<AuthPage />} />
-        <Route path="/admin-push-test" element={<AdminPushTest />} />
+        <Route path="/admin/push" element={<AdminPushTest />} />
+        <Route path="/admin/board" element={<AdminBoard />} />
         <Route
           path="*"
           element={<SimplePage title="페이지를 찾을 수 없습니다" />}

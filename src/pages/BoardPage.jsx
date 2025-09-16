@@ -648,21 +648,9 @@ export default function BoardPage() {
         content,
         tag: tag.trim() || undefined,
       });
-      // 방금 작성한 글을 서버에서 다시 불러와 정규화된 데이터로 반영
-      let hydrated = created;
-      try {
-        const postId = created?.id || created?.post_id;
-        if (postId) {
-          const full = await fetchSinglePost(postId, false);
-          if (full) hydrated = full;
-        }
-      } catch {}
-      const nextItems = [hydrated, ...(items || [])];
-      setItems(nextItems);
-      // 캐시도 함께 갱신
-      try {
-        setBoardListCache({ items: nextItems, cursor, hasMore });
-      } catch {}
+      // 승인제 적용: 관리자가 승인하면 목록에 노출됩니다.
+      toast?.show("관리자 승인 후 게시판에 노출됩니다.", { type: "info" });
+      // 입력값 초기화 및 폼 닫기만 수행 (목록은 그대로 유지)
       setTitle("");
       setContent("");
       setTag(TAGS[0]);
@@ -702,6 +690,8 @@ export default function BoardPage() {
             : p
         )
       );
+      // 승인제 안내: 관리자가 승인하면 댓글이 표시됩니다.
+      toast?.show("관리자 승인 후 댓글이 표시됩니다.", { type: "info" });
       return true;
     } catch {
       toast?.show("댓글 등록에 실패했어요.", { type: "error" });
@@ -728,7 +718,7 @@ export default function BoardPage() {
 
   return (
     <main className="main-content page-content">
-      <PageHeader title={activeTab === "board" ? "게시판" : "공지사항"} />
+      <PageHeader title={activeTab === "board" ? "칭찬합시다" : "공지사항"} />
       <div className="container" ref={scrollRef}>
         <div
           aria-live="polite"
@@ -796,7 +786,7 @@ export default function BoardPage() {
                 setLocationPath("/board");
               }}
             >
-              게시판
+              칭찬합시다
             </label>
           </div>
         </div>
