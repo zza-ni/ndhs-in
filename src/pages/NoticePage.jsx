@@ -25,6 +25,7 @@ import {
   enhanceHtml as enhanceHtmlUtil,
   hydrateImagesInElement,
 } from "../lib/htmlUtils";
+import { fetchWithRetry } from "../lib/api";
 
 export default function NoticePage() {
   // 상태
@@ -66,7 +67,7 @@ export default function NoticePage() {
   async function fetchNoticesPageWithCursor(nextCursor = null) {
     const u = new URL(NOTICE_API);
     if (nextCursor) u.searchParams.set("last", nextCursor);
-    const res = await fetch(u.toString(), {
+    const res = await fetchWithRetry(u.toString(), {
       headers: { Accept: "application/json" },
     });
     if (!res.ok) throw new Error("Failed to load");
@@ -78,7 +79,9 @@ export default function NoticePage() {
 
   async function fetchSinglePost(id) {
     const url = `${NOTICE_API}/${id}`;
-    const res = await fetch(url, { headers: { Accept: "application/json" } });
+    const res = await fetchWithRetry(url, {
+      headers: { Accept: "application/json" },
+    });
     if (!res.ok) throw new Error("Failed to load");
     const data = await res.json();
     if (Array.isArray(data?.posts)) return data.posts[0] || null;

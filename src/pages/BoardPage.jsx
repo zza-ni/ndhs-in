@@ -31,6 +31,7 @@ import {
   enhanceHtml as enhanceHtmlUtil,
   hydrateImagesInElement,
 } from "../lib/htmlUtils";
+import { fetchWithRetry } from "../lib/api";
 
 export default function BoardPage() {
   const toast = useToast();
@@ -83,7 +84,7 @@ export default function BoardPage() {
   const segControlRef = React.useRef(null);
   const liveRegionRef = React.useRef(null);
 
-  // 게시물별 댓글 상태 저장: { [postId]: { items?: any[], loading?: boolean, error?: string } }
+  // 게시물별 댓글 상태 저장: { [postId]: { items?: any[], loading?: boolean, error?: string, tries?: number } }
   const [commentsByPost, setCommentsByPost] = React.useState({});
 
   // derived post id from the URL we manage. prefer explicit pathname parsing
@@ -145,7 +146,7 @@ export default function BoardPage() {
   async function fetchBoardPageWithCursor(nextCursor = null) {
     const u = new URL(BOARD_API);
     if (nextCursor) u.searchParams.set("last", nextCursor);
-    const res = await fetch(u.toString(), {
+    const res = await fetchWithRetry(u.toString(), {
       headers: { Accept: "application/json" },
     });
     if (!res.ok) throw new Error("Failed to load");
@@ -159,7 +160,9 @@ export default function BoardPage() {
     // choose API based on whether it's a notice or a board post
     const base = isNotice ? NOTICE_API : BOARD_API;
     const url = `${base}/${id}`;
-    const res = await fetch(url, { headers: { Accept: "application/json" } });
+    const res = await fetchWithRetry(url, {
+      headers: { Accept: "application/json" },
+    });
     if (!res.ok) throw new Error("Failed to load");
     const data = await res.json();
     if (Array.isArray(data?.posts)) return data.posts[0] || null;
@@ -171,7 +174,7 @@ export default function BoardPage() {
   async function fetchNoticesPageWithCursor(nextCursor = null) {
     const u = new URL(NOTICE_API);
     if (nextCursor) u.searchParams.set("last", nextCursor);
-    const res = await fetch(u.toString(), {
+    const res = await fetchWithRetry(u.toString(), {
       headers: { Accept: "application/json" },
     });
     if (!res.ok) throw new Error("Failed to load");
@@ -183,7 +186,7 @@ export default function BoardPage() {
 
   // 글쓰기
   async function createPost({ title, content, tag }) {
-    const res = await fetch(BOARD_API, {
+    const res = await fetchWithRetry(BOARD_API, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title, content, tag }),
@@ -194,7 +197,7 @@ export default function BoardPage() {
 
   // 댓글쓰기
   async function createComment(postId, { content }) {
-    const res = await fetch(`${BOARD_API}/${postId}/comments`, {
+    const res = await fetchWithRetry(`${BOARD_API}/${postId}/comments`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ content }),
@@ -205,7 +208,7 @@ export default function BoardPage() {
 
   // 댓글 목록 가져오기 (지연 로딩)
   async function fetchComments(postId) {
-    const res = await fetch(`${BOARD_API}/${postId}/comments`, {
+    const res = await fetchWithRetry(`${BOARD_API}/${postId}/comments`, {
       headers: { Accept: "application/json" },
     });
     if (!res.ok) throw new Error("Failed to load comments");
@@ -221,7 +224,8 @@ export default function BoardPage() {
     async (postId) => {
       if (!postId) return;
       const key = String(postId);
-      if (commentsByPost[key]?.items || commentsByPost[key]?.loading) return;
+      const state = commentsByPost[key] || {};
+      if (state.items || state.loading) return;
       setCommentsByPost((prev) => ({
         ...prev,
         [key]: { ...(prev[key] || {}), loading: true, error: "" },
@@ -245,7 +249,9 @@ export default function BoardPage() {
 
   // 추천(좋아요)
   async function likePost(postId) {
-    const res = await fetch(`${BOARD_API}/${postId}/like`, { method: "POST" });
+    const res = await fetchWithRetry(`${BOARD_API}/${postId}/like`, {
+      method: "POST",
+    });
     if (!res.ok) throw new Error("like");
     return res.json();
   }
@@ -913,7 +919,10 @@ export default function BoardPage() {
                   const isOpen = urlPostId
                     ? true
                     : String(openId) === String(id);
-                  const title = it.title || `게시글 ${idx + 1}`;
+                  const isPending = it && it.isAccept === false;
+                  const title = isPending
+                    ? "승인 후 보여집니다."
+                    : it.title || `게시글 ${idx + 1}`;
                   const dateStr = formatDate(it.created_at);
                   const html = enhanceHtml(it.content, !urlPostId);
                   const panelId = `board-panel-${id}`;
@@ -951,7 +960,7 @@ export default function BoardPage() {
                         aria-controls={panelId}
                       >
                         <span className={acc.title}>
-                          {it.tag ? (
+                          {!isPending && it.tag ? (
                             <>
                               <TagChip style={{ marginRight: 6 }}>
                                 {it.tag}
@@ -982,7 +991,13 @@ export default function BoardPage() {
                               href={permalink}
                             />
                           )}
-                          <div dangerouslySetInnerHTML={{ __html: html }} />
+                          {isPending ? (
+                            <div className="muted" style={{ padding: "8px 0" }}>
+                              승인 후 보여집니다.
+                            </div>
+                          ) : (
+                            <div dangerouslySetInnerHTML={{ __html: html }} />
+                          )}
                         </div>
                         {activeTab === "board" && (
                           <>
@@ -994,7 +1009,10 @@ export default function BoardPage() {
                                 aria-pressed={
                                   likingId === (it.id || it.post_id)
                                 }
-                                disabled={likingId === (it.id || it.post_id)}
+                                disabled={
+                                  isPending ||
+                                  likingId === (it.id || it.post_id)
+                                }
                                 title="추천하기"
                               >
                                 {likingId === (it.id || it.post_id)
@@ -1045,7 +1063,13 @@ export default function BoardPage() {
                                             </span>
                                           </div>
                                           <div className={styles.commentBody}>
-                                            {c.content}
+                                            {c && c.isAccept === false ? (
+                                              <span className="muted">
+                                                승인 후 보여집니다.
+                                              </span>
+                                            ) : (
+                                              c.content
+                                            )}
                                           </div>
                                         </li>
                                       ))}

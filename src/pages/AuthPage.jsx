@@ -2,6 +2,7 @@ import React from "react";
 import PageHeader from "../components/PageHeader";
 import { useToast } from "../components/ui/Toast.jsx";
 import form from "../components/ui/Form.module.css";
+import { fetchWithRetry } from "../lib/api";
 
 export default function AuthPage() {
   const toast = useToast();
@@ -37,7 +38,7 @@ export default function AuthPage() {
     setError("");
     setSuccess("");
     try {
-      const res = await fetch(AUTH_API, {
+      const res = await fetchWithRetry(AUTH_API, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

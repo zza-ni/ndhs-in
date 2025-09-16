@@ -3,6 +3,7 @@ import PageHeader from "../components/PageHeader";
 import Divider from "../components/ui/Divider";
 import form from "../components/ui/Form.module.css";
 import { useToast } from "../components/ui/Toast.jsx";
+import { fetchWithRetry } from "../lib/api";
 
 export default function AdminBoard() {
   const toast = useToast();
@@ -28,10 +29,10 @@ export default function AdminBoard() {
   );
 
   const fetchPendingPosts = React.useCallback(async () => {
-    if (!API_ENDPOINT) return;
+    if (!API_ENDPOINT || !token) return;
     setLoadingPosts(true);
     try {
-      const res = await fetch(
+      const res = await fetchWithRetry(
         `${API_ENDPOINT}/admin/boards/${BOARD_ID}/pending`,
         { headers }
       );
@@ -43,14 +44,14 @@ export default function AdminBoard() {
     } finally {
       setLoadingPosts(false);
     }
-  }, [API_ENDPOINT, headers, toast]);
+  }, [API_ENDPOINT, headers, token, toast]);
 
   const fetchPendingComments = React.useCallback(
     async (postId) => {
       if (!API_ENDPOINT || !postId) return;
       setLoadingComments(true);
       try {
-        const res = await fetch(
+        const res = await fetchWithRetry(
           `${API_ENDPOINT}/admin/boards/${BOARD_ID}/${postId}/comments/pending`,
           { headers }
         );
@@ -68,7 +69,7 @@ export default function AdminBoard() {
 
   const approvePost = async (postId, accept = true) => {
     try {
-      const res = await fetch(
+      const res = await fetchWithRetry(
         `${API_ENDPOINT}/admin/boards/${BOARD_ID}/${postId}/accept`,
         {
           method: "POST",
@@ -80,7 +81,14 @@ export default function AdminBoard() {
       toast?.show(accept ? "글 승인 완료" : "글 반려 완료", {
         type: "success",
       });
-      await fetchPendingPosts();
+      // 반려 시에는 즉시 목록에서 제거
+      if (!accept) {
+        setPendingPosts((prev) =>
+          prev.filter((p) => (p.id || p.post_id) !== postId)
+        );
+      } else {
+        await fetchPendingPosts();
+      }
       if (postId === selectedPostId) await fetchPendingComments(postId);
     } catch {
       toast?.show("처리 실패", { type: "error" });
@@ -89,7 +97,7 @@ export default function AdminBoard() {
 
   const approveComment = async (postId, commentId, accept = true) => {
     try {
-      const res = await fetch(
+      const res = await fetchWithRetry(
         `${API_ENDPOINT}/admin/boards/${BOARD_ID}/${postId}/comments/${commentId}/accept`,
         {
           method: "POST",
@@ -107,9 +115,7 @@ export default function AdminBoard() {
     }
   };
 
-  React.useEffect(() => {
-    fetchPendingPosts();
-  }, [fetchPendingPosts]);
+  // 초기 자동 호출 제거: 저장 버튼에서 명시적으로 호출
 
   return (
     <main className="main-content page-content">
@@ -129,9 +135,29 @@ export default function AdminBoard() {
             />
             <button
               className={form.btn}
-              onClick={() => {
-                localStorage.setItem("adminToken", token || "");
-                toast?.show("토큰 저장", { type: "success" });
+              onClick={async () => {
+                // 저장 시 토큰 검증: 간단히 대기 목록 API 한 번 호출해 200 확인
+                try {
+                  const res = await fetchWithRetry(
+                    `${API_ENDPOINT}/admin/boards/${BOARD_ID}/pending`,
+                    {
+                      headers: {
+                        Accept: "application/json",
+                        ...(token ? { "X-Admin-Token": token } : {}),
+                      },
+                    }
+                  );
+                  if (!res.ok) {
+                    toast?.show("토큰이 유효하지 않습니다.", { type: "error" });
+                    return;
+                  }
+                  localStorage.setItem("adminToken", token || "");
+                  toast?.show("토큰 저장 및 확인 완료", { type: "success" });
+                  // 토큰이 올바르면 목록 갱신
+                  await fetchPendingPosts();
+                } catch {
+                  toast?.show("토큰 확인 중 오류", { type: "error" });
+                }
               }}
             >
               저장
@@ -156,9 +182,8 @@ export default function AdminBoard() {
                   <div
                     style={{
                       display: "flex",
-                      justifyContent: "space-between",
+                      flexDirection: "column",
                       gap: 8,
-                      alignItems: "baseline",
                     }}
                   >
                     <div style={{ minWidth: 0 }}>
@@ -177,8 +202,23 @@ export default function AdminBoard() {
                       >
                         {new Date(p.created_at).toLocaleString("ko-KR")}
                       </div>
+                      {/* 본문 표시 */}
+                      {p.content && (
+                        <div
+                          style={{
+                            marginTop: 6,
+                            background: "var(--surface-2)",
+                            padding: "8px 10px",
+                            borderRadius: 8,
+                            whiteSpace: "pre-wrap",
+                            wordBreak: "break-word",
+                          }}
+                        >
+                          {p.content}
+                        </div>
+                      )}
                     </div>
-                    <div style={{ display: "flex", gap: 6 }}>
+                    <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
                       <button
                         className={form.btn}
                         onClick={() => approvePost(p.id, true)}

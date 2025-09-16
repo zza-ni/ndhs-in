@@ -3,6 +3,7 @@ import form from "../components/ui/Form.module.css";
 import PageHeader from "../components/PageHeader";
 import { Card, CardHeader, CardTitle, CardBody } from "../components/ui/Card";
 import Divider from "../components/ui/Divider";
+import { fetchWithRetry } from "../lib/api";
 
 export default function AdminPushTest() {
   const [password, setPassword] = React.useState("");
@@ -20,7 +21,7 @@ export default function AdminPushTest() {
     try {
       const path = type === "all" ? "/api/sendAllPush" : "/api/sendPush";
       const payload = { password, title, body };
-      const res = await fetch(path, {
+      const res = await fetchWithRetry(path, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

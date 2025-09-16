@@ -17,6 +17,7 @@ import {
   setNoticeListCache,
 } from "../lib/noticeCache";
 import styles from "./HomePage.module.css";
+import { fetchWithRetry } from "../lib/api";
 
 const days = ["월", "화", "수", "목", "금", "토", "일"];
 const tz = "Asia/Seoul";
@@ -158,7 +159,7 @@ export default function HomePage() {
           setTopNotices((c.items || []).slice(0, 3));
         } else {
           const u = new URL(NOTICE_API);
-          const res = await fetch(u.toString(), {
+          const res = await fetchWithRetry(u.toString(), {
             headers: { Accept: "application/json" },
           });
           if (!res.ok) throw new Error("notice");
@@ -185,7 +186,7 @@ export default function HomePage() {
       try {
         setDryerLoading(true);
         setDryerError("");
-        const res = await fetch(LAUNDRY_API, {
+        const res = await fetchWithRetry(LAUNDRY_API, {
           headers: { Accept: "application/json" },
         });
         if (!res.ok) throw new Error("laundry");

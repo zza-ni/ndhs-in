@@ -6,6 +6,7 @@ import {
 } from "firebase/analytics";
 import { getMessaging, getToken } from "firebase/messaging";
 import { deleteToken } from "firebase/messaging";
+import { fetchWithRetry } from "./lib/api";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCeqeuQkTb3wioxIogkn7hcUQz9FP2K1XA",
@@ -108,7 +109,7 @@ function saveTokenToServer(token) {
   const deviceId = getDeviceId();
   const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
   const platform = typeof navigator !== "undefined" ? navigator.platform : "";
-  return fetch("/api/saveToken", {
+  return fetchWithRetry("/api/saveToken", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ token, deviceId, ua, platform }),
