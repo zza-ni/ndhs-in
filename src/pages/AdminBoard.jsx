@@ -19,6 +19,9 @@ export default function AdminBoard() {
   const [selectedPostId, setSelectedPostId] = React.useState("");
   const [pendingComments, setPendingComments] = React.useState([]);
   const [loadingComments, setLoadingComments] = React.useState(false);
+  const [allCommentsMode, setAllCommentsMode] = React.useState(false);
+  const [allPendingComments, setAllPendingComments] = React.useState([]);
+  const [loadingAllComments, setLoadingAllComments] = React.useState(false);
 
   const headers = React.useMemo(
     () => ({
@@ -67,6 +70,24 @@ export default function AdminBoard() {
     [API_ENDPOINT, headers, toast]
   );
 
+  const fetchAllPendingComments = React.useCallback(async () => {
+    if (!API_ENDPOINT) return;
+    setLoadingAllComments(true);
+    try {
+      const res = await fetchWithRetry(
+        `${API_ENDPOINT}/admin/boards/${BOARD_ID}/comments/pending`,
+        { headers }
+      );
+      if (!res.ok) throw new Error("list");
+      const data = await res.json();
+      setAllPendingComments(Array.isArray(data?.items) ? data.items : []);
+    } catch (e) {
+      toast?.show("전체 대기 댓글을 불러오지 못했어요.", { type: "error" });
+    } finally {
+      setLoadingAllComments(false);
+    }
+  }, [API_ENDPOINT, headers, toast]);
+
   const approvePost = async (postId, accept = true) => {
     try {
       const res = await fetchWithRetry(
@@ -109,7 +130,11 @@ export default function AdminBoard() {
       toast?.show(accept ? "댓글 승인 완료" : "댓글 반려 완료", {
         type: "success",
       });
-      await fetchPendingComments(postId);
+      if (allCommentsMode) {
+        await fetchAllPendingComments();
+      } else {
+        await fetchPendingComments(postId);
+      }
     } catch {
       toast?.show("처리 실패", { type: "error" });
     }
@@ -250,78 +275,174 @@ export default function AdminBoard() {
             </ul>
           )}
         </section>
-        {selectedPostId && (
-          <>
-            <Divider />
-            <section>
-              <h3>대기중인 댓글 (post: {selectedPostId})</h3>
-              {loadingComments ? (
-                <div>불러오는 중…</div>
-              ) : (
-                <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-                  {(pendingComments || []).map((c) => (
-                    <li
-                      key={c.id}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            marginTop: 16,
+          }}
+        >
+          <label
+            className="checkbox"
+            style={{ display: "flex", alignItems: "center", gap: 6 }}
+          >
+            <input
+              type="checkbox"
+              checked={allCommentsMode}
+              onChange={async (e) => {
+                const next = e.target.checked;
+                setAllCommentsMode(next);
+                if (next) {
+                  await fetchAllPendingComments();
+                }
+              }}
+            />
+            <span>댓글 전체 보기</span>
+          </label>
+          {allCommentsMode && (
+            <button className={form.btn} onClick={fetchAllPendingComments}>
+              새로고침
+            </button>
+          )}
+        </div>
+        {allCommentsMode ? (
+          <section>
+            <h3>대기중인 댓글 (전체)</h3>
+            {loadingAllComments ? (
+              <div>불러오는 중…</div>
+            ) : (
+              <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                {(allPendingComments || []).map((c) => (
+                  <li
+                    key={c.id}
+                    style={{
+                      padding: "8px 0",
+                      borderBottom: "1px dashed var(--border-color)",
+                    }}
+                  >
+                    <div
                       style={{
-                        padding: "8px 0",
-                        borderBottom: "1px dashed var(--border-color)",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        gap: 8,
                       }}
                     >
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          gap: 8,
-                        }}
-                      >
-                        <div style={{ minWidth: 0 }}>
-                          <div
-                            style={{
-                              whiteSpace: "pre-wrap",
-                              wordBreak: "break-word",
-                            }}
-                          >
-                            {c.content}
-                          </div>
-                          <div
-                            style={{
-                              color: "var(--muted-color)",
-                              fontSize: 12,
-                            }}
-                          >
-                            {new Date(c.created_at).toLocaleString("ko-KR")}
-                          </div>
+                      <div style={{ minWidth: 0 }}>
+                        <div
+                          style={{
+                            whiteSpace: "pre-wrap",
+                            wordBreak: "break-word",
+                          }}
+                        >
+                          {c.content}
                         </div>
-                        <div style={{ display: "flex", gap: 6 }}>
-                          <button
-                            className={form.btn}
-                            onClick={() =>
-                              approveComment(selectedPostId, c.id, true)
-                            }
-                          >
-                            승인
-                          </button>
-                          <button
-                            className={form.btn}
-                            onClick={() =>
-                              approveComment(selectedPostId, c.id, false)
-                            }
-                          >
-                            반려
-                          </button>
+                        <div
+                          style={{ color: "var(--muted-color)", fontSize: 12 }}
+                        >
+                          {new Date(c.created_at).toLocaleString("ko-KR")} ·
+                          post: {c.post_id}
                         </div>
                       </div>
-                    </li>
-                  ))}
-                  {(!pendingComments || pendingComments.length === 0) && (
-                    <li style={{ padding: "8px 0" }}>
-                      대기중인 댓글이 없습니다.
-                    </li>
-                  )}
-                </ul>
-              )}
-            </section>
-          </>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <button
+                          className={form.btn}
+                          onClick={() => approveComment(c.post_id, c.id, true)}
+                        >
+                          승인
+                        </button>
+                        <button
+                          className={form.btn}
+                          onClick={() => approveComment(c.post_id, c.id, false)}
+                        >
+                          반려
+                        </button>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+                {(!allPendingComments || allPendingComments.length === 0) && (
+                  <li style={{ padding: "8px 0" }}>
+                    대기중인 댓글이 없습니다.
+                  </li>
+                )}
+              </ul>
+            )}
+          </section>
+        ) : (
+          selectedPostId && (
+            <>
+              <Divider />
+              <section>
+                <h3>대기중인 댓글 (post: {selectedPostId})</h3>
+                {loadingComments ? (
+                  <div>불러오는 중…</div>
+                ) : (
+                  <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                    {(pendingComments || []).map((c) => (
+                      <li
+                        key={c.id}
+                        style={{
+                          padding: "8px 0",
+                          borderBottom: "1px dashed var(--border-color)",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            gap: 8,
+                          }}
+                        >
+                          <div style={{ minWidth: 0 }}>
+                            <div
+                              style={{
+                                whiteSpace: "pre-wrap",
+                                wordBreak: "break-word",
+                              }}
+                            >
+                              {c.content}
+                            </div>
+                            <div
+                              style={{
+                                color: "var(--muted-color)",
+                                fontSize: 12,
+                              }}
+                            >
+                              {new Date(c.created_at).toLocaleString("ko-KR")}
+                            </div>
+                          </div>
+                          <div style={{ display: "flex", gap: 6 }}>
+                            <button
+                              className={form.btn}
+                              onClick={() =>
+                                approveComment(selectedPostId, c.id, true)
+                              }
+                            >
+                              승인
+                            </button>
+                            <button
+                              className={form.btn}
+                              onClick={() =>
+                                approveComment(selectedPostId, c.id, false)
+                              }
+                            >
+                              반려
+                            </button>
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                    {(!pendingComments || pendingComments.length === 0) && (
+                      <li style={{ padding: "8px 0" }}>
+                        대기중인 댓글이 없습니다.
+                      </li>
+                    )}
+                  </ul>
+                )}
+              </section>
+            </>
+          )
         )}
       </div>
     </main>

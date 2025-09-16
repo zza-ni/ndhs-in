@@ -26,7 +26,6 @@ import {
 import PermalinkBar from "../components/PermalinkBar";
 import ImageModal from "../components/ImageModal";
 import BoardCommentBox from "../components/BoardCommentBox";
-import TagBar from "../components/TagBar";
 import {
   enhanceHtml as enhanceHtmlUtil,
   hydrateImagesInElement,
@@ -65,7 +64,7 @@ export default function BoardPage() {
     return "notice";
   });
 
-  // 탭별 태그 선택 상태 관리 (공지/게시판 각각 독립)
+  // 탭별 태그 선택 상태 관리 (공지/게시판 각각 독립) — 게시판에서는 태그 UI 제거
   const [selectedTagByTab, setSelectedTagByTab] = React.useState({
     board: "전체",
     notice: "전체",
@@ -132,7 +131,7 @@ export default function BoardPage() {
     [IMAGE_BASE]
   );
 
-  // 현재 탭의 항목에서 태그 목록 도출 (첫 항목은 '전체')
+  // 현재 탭의 항목에서 태그 목록 도출 (첫 항목은 '전체') — 공지에서만 사용
   const activeItems = activeTab === "board" ? items : noticeItems;
   const tagOptions = React.useMemo(() => {
     const set = new Set();
@@ -185,11 +184,11 @@ export default function BoardPage() {
   }
 
   // 글쓰기
-  async function createPost({ title, content, tag }) {
+  async function createPost({ title, content }) {
     const res = await fetchWithRetry(BOARD_API, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, content, tag }),
+      body: JSON.stringify({ title, content }),
     });
     if (!res.ok) throw new Error("create");
     return res.json();
@@ -632,8 +631,6 @@ export default function BoardPage() {
   // 새 글 작성 UI (간단 폼)
   const [title, setTitle] = React.useState("");
   const [content, setContent] = React.useState("");
-  const TAGS = ["일반", "홍보", "모집"];
-  const [tag, setTag] = React.useState(TAGS[0]);
   const [submitting, setSubmitting] = React.useState(false);
   const [likingId, setLikingId] = React.useState(null);
   const [writeFormOpen, setWriteFormOpen] = React.useState(false); // 글쓰기 아코디언 상태
@@ -649,17 +646,13 @@ export default function BoardPage() {
     if (!title.trim() || !content.trim()) return;
     setSubmitting(true);
     try {
-      const created = await createPost({
-        title: title.trim(),
-        content,
-        tag: tag.trim() || undefined,
-      });
+      const created = await createPost({ title: title.trim(), content });
       // 승인제 적용: 관리자가 승인하면 목록에 노출됩니다.
       toast?.show("관리자 승인 후 게시판에 노출됩니다.", { type: "info" });
       // 입력값 초기화 및 폼 닫기만 수행 (목록은 그대로 유지)
       setTitle("");
       setContent("");
-      setTag(TAGS[0]);
+      // 태그 제거됨
       // 글쓰기 폼 닫기
       setWriteFormOpen(false);
     } catch {
@@ -797,16 +790,7 @@ export default function BoardPage() {
           </div>
         </div>
         {/* 태그 필터: 게시판 탭에서만 */}
-        {!urlPostId && activeTab === "board" && (
-          <>
-            <TagBar
-              tags={tagOptions}
-              selected={selectedTag}
-              onSelect={setSelectedTag}
-            />
-            <Divider />
-          </>
-        )}
+        {/* 게시판에서는 태그 필터 UI 제거 */}
         {/* 게시판 탭에서만 글쓰기 표시 */}
         {!urlPostId && activeTab === "board" && (
           <div
@@ -835,19 +819,7 @@ export default function BoardPage() {
             >
               <form className={styles.boardWrite} onSubmit={onSubmit}>
                 <div className={styles.boardWriteBody}>
-                  <div className={styles.boardWriteTags}>
-                    {TAGS.map((t) => (
-                      <button
-                        type="button"
-                        key={t}
-                        className={`tag-chip${tag === t ? " active" : ""}`}
-                        onClick={() => setTag(t)}
-                        aria-pressed={tag === t}
-                      >
-                        {t}
-                      </button>
-                    ))}
-                  </div>
+                  {/* 태그 선택 제거 */}
                   <input
                     className={form.input}
                     placeholder="제목을 입력하세요"
@@ -910,9 +882,10 @@ export default function BoardPage() {
             <div className={acc.accordion}>
               {(activeTab === "board" ? items : noticeItems)
                 .filter((it) =>
-                  selectedTag === "전체"
-                    ? true
-                    : String(it.tag || "").trim() === selectedTag
+                  activeTab === "notice"
+                    ? selectedTag === "전체" ||
+                      String(it.tag || "").trim() === selectedTag
+                    : true
                 )
                 .map((it, idx) => {
                   const id = it.id || it.post_id || idx;
@@ -960,7 +933,7 @@ export default function BoardPage() {
                         aria-controls={panelId}
                       >
                         <span className={acc.title}>
-                          {!isPending && it.tag ? (
+                          {activeTab === "notice" && !isPending && it.tag ? (
                             <>
                               <TagChip style={{ marginRight: 6 }}>
                                 {it.tag}
