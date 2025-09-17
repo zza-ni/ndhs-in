@@ -179,6 +179,36 @@ export default function PWAInstallPrompt() {
 
   const requestInstall = async () => {
     if (isiOS()) {
+      // If not Safari (e.g., in-app browsers), try to open current URL in Safari
+      if (!isSafari()) {
+        // Show guidance toast then attempt to open in Safari
+        toast?.show("설치를 위해 Safari로 이동합니다.", {
+          type: "info",
+          duration: 4000,
+        });
+        let leftPage = false;
+        const onVisibility = () => {
+          if (document.hidden) leftPage = true;
+        };
+        try {
+          document.addEventListener("visibilitychange", onVisibility, {
+            passive: true,
+          });
+        } catch {}
+        try {
+          openInSafari();
+        } catch {}
+        // If we didn't leave the page shortly, show the manual modal as fallback
+        setTimeout(() => {
+          try {
+            document.removeEventListener("visibilitychange", onVisibility);
+          } catch {}
+          if (!leftPage) {
+            setShowIOSModal(true);
+          }
+        }, 2500);
+        return;
+      }
       setShowIOSModal(true);
       return;
     }
@@ -350,6 +380,18 @@ export default function PWAInstallPrompt() {
       }, 3000);
     } catch (err) {
       // Best-effort graceful no-op
+    }
+  }, []);
+
+  // iOS: open current URL in Safari using x-safari-https scheme
+  const openInSafari = React.useCallback(() => {
+    try {
+      const href = window.location.href;
+      const u = new URL(href);
+      const safariUrl = `x-safari-https://${u.host}${u.pathname}${u.search}${u.hash}`;
+      window.location.href = safariUrl;
+    } catch (err) {
+      // no-op
     }
   }, []);
 
