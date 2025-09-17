@@ -1,4 +1,5 @@
 import React from "react";
+import { useToast } from "./ui/Toast.jsx";
 
 // Safe UA helpers (avoid crashing when window/navigator are unavailable)
 const getUA = () => {
@@ -9,6 +10,7 @@ const getUA = () => {
   }
 };
 const isiOS = () => /iphone|ipad|ipod/i.test(getUA());
+const isAndroid = () => /android/i.test(getUA());
 const isKakaoInAppBrowser = () => /KAKAOTALK/i.test(getUA());
 const isSafari = () => {
   const ua = getUA();
@@ -41,6 +43,7 @@ if (typeof window !== "undefined") {
 }
 
 export default function PWAInstallPrompt() {
+  const toast = useToast();
   const [deferred, setDeferred] = React.useState(null);
   const [showSnack, setShowSnack] = React.useState(false);
   const [showIOSModal, setShowIOSModal] = React.useState(false);
@@ -177,6 +180,14 @@ export default function PWAInstallPrompt() {
       setShowIOSModal(true);
       return;
     }
+    // Android KakaoTalk in-app browser cannot handle PWA install
+    if (isAndroid() && isKakaoInAppBrowser()) {
+      toast?.show("크롬에서만 설치가 가능합니다!", {
+        type: "error",
+        duration: 20000,
+      });
+      return;
+    }
     // If we've already used the install prompt on this page and no deferred/early event is available anymore,
     // we must reload to obtain a fresh beforeinstallprompt event (Chrome policy: one prompt per page load).
     if (
@@ -287,6 +298,29 @@ export default function PWAInstallPrompt() {
     }
   };
 
+  // Deep-link opener to launch current URL in Chrome (Android intent)
+  const openInChrome = React.useCallback(() => {
+    try {
+      const href = window.location.href;
+      const u = new URL(href);
+      const scheme = (u.protocol || "https:").replace(":", "");
+      const base = `${u.host}${u.pathname}${u.search}${u.hash}`;
+      const fallback = encodeURIComponent(
+        "https://play.google.com/store/apps/details?id=com.android.chrome"
+      );
+      const intentUrl = `intent://${base}#Intent;scheme=${scheme};package=com.android.chrome;S.browser_fallback_url=${fallback};end`;
+      window.location.href = intentUrl;
+    } catch (err) {
+      try {
+        // Very last resort
+        window.location.href = window.location.href.replace(
+          /^https?:/,
+          "googlechrome:"
+        );
+      } catch {}
+    }
+  }, []);
+
   return (
     <>
       {/* Snackbar */}
@@ -300,6 +334,17 @@ export default function PWAInstallPrompt() {
                 <br />
               </div>
             </div>
+            {isAndroid() && isKakaoInAppBrowser() && (
+              <button
+                id="snackbar-open-in-chrome-btn"
+                onClick={openInChrome}
+                title="크롬으로 열기"
+                aria-label="크롬으로 열기"
+                style={{ marginRight: 8 }}
+              >
+                크롬으로 열기
+              </button>
+            )}
             <button id="snackbar-install-btn" onClick={requestInstall}>
               설치
             </button>
