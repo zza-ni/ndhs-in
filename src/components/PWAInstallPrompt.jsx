@@ -9,16 +9,18 @@ const getUA = () => {
     return "";
   }
 };
+
 const isiOS = () => /iphone|ipad|ipod/i.test(getUA());
 const isAndroid = () => /android/i.test(getUA());
-const isKakaoInAppBrowser = () => /KAKAOTALK/i.test(getUA());
+// Naver/Kakao in-app browser detector
+const isNAKAInAppBroswer = () => /(KAKAOTALK|NAVER)/i.test(getUA());
 const isSafari = () => {
   const ua = getUA();
   return (
     isiOS() &&
     /Safari/i.test(ua) &&
     !/CriOS/i.test(ua) &&
-    !isKakaoInAppBrowser() &&
+    !isNAKAInAppBroswer() &&
     !/FBAV|Line/i.test(ua)
   );
 };
@@ -180,12 +182,18 @@ export default function PWAInstallPrompt() {
       setShowIOSModal(true);
       return;
     }
-    // Android KakaoTalk in-app browser cannot handle PWA install
-    if (isAndroid() && isKakaoInAppBrowser()) {
-      toast?.show("크롬에서만 설치가 가능합니다!", {
-        type: "error",
-        duration: 20000,
+    // Android Naver/Kakao in-app browsers: open externally via Chrome (fallback Samsung Internet)
+    if (isAndroid() && isNAKAInAppBroswer()) {
+      // Show a quick guidance toast, then attempt external open shortly after
+      toast?.show("설치를 위해 크롬으로 이동합니다.", {
+        type: "info",
+        duration: 4000,
       });
+      setTimeout(() => {
+        try {
+          openInChrome();
+        } catch {}
+      }, 600);
       return;
     }
     // If we've already used the install prompt on this page and no deferred/early event is available anymore,
@@ -298,26 +306,50 @@ export default function PWAInstallPrompt() {
     }
   };
 
-  // Deep-link opener to launch current URL in Chrome (Android intent)
+  // Deep-link opener: try Chrome intent, then Samsung Internet intent as fallback
   const openInChrome = React.useCallback(() => {
     try {
       const href = window.location.href;
       const u = new URL(href);
       const scheme = (u.protocol || "https:").replace(":", "");
       const base = `${u.host}${u.pathname}${u.search}${u.hash}`;
-      const fallback = encodeURIComponent(
-        "https://play.google.com/store/apps/details?id=com.android.chrome"
-      );
-      const intentUrl = `intent://${base}#Intent;scheme=${scheme};package=com.android.chrome;S.browser_fallback_url=${fallback};end`;
-      window.location.href = intentUrl;
+
+      const chromeIntent = `intent://${base}#Intent;scheme=${scheme};package=com.android.chrome;end`;
+      const samsungIntent = `intent://${base}#Intent;scheme=${scheme};package=com.sec.android.app.sbrowser;end`;
+
+      let leftPage = false;
+      const onVisibility = () => {
+        if (document.hidden) leftPage = true;
+      };
+      document.addEventListener("visibilitychange", onVisibility, {
+        passive: true,
+      });
+
+      // Try Chrome first
+      window.location.href = chromeIntent;
+
+      // If still here after 900ms, try Samsung Internet
+      const t1 = setTimeout(() => {
+        if (!leftPage) {
+          window.location.href = samsungIntent;
+        }
+      }, 900);
+
+      // Cleanup listener later, and if still here, notify user
+      setTimeout(() => {
+        try {
+          document.removeEventListener("visibilitychange", onVisibility);
+        } catch {}
+        clearTimeout(t1);
+        if (!leftPage) {
+          toast?.show(
+            "외부 브라우저로 열 수 없어요. 링크를 복사해 크롬에서 열어주세요.",
+            { type: "error", duration: 6000 }
+          );
+        }
+      }, 3000);
     } catch (err) {
-      try {
-        // Very last resort
-        window.location.href = window.location.href.replace(
-          /^https?:/,
-          "googlechrome:"
-        );
-      } catch {}
+      // Best-effort graceful no-op
     }
   }, []);
 
@@ -334,17 +366,6 @@ export default function PWAInstallPrompt() {
                 <br />
               </div>
             </div>
-            {isAndroid() && isKakaoInAppBrowser() && (
-              <button
-                id="snackbar-open-in-chrome-btn"
-                onClick={openInChrome}
-                title="크롬으로 열기"
-                aria-label="크롬으로 열기"
-                style={{ marginRight: 8 }}
-              >
-                크롬으로 열기
-              </button>
-            )}
             <button id="snackbar-install-btn" onClick={requestInstall}>
               설치
             </button>
@@ -402,7 +423,7 @@ export default function PWAInstallPrompt() {
                   &nbsp; 버튼을 누르고{" "}
                   <b style={{ color: "blue" }}>홈 화면에 추가하기</b>
                 </p>
-              ) : isKakaoInAppBrowser() ? (
+              ) : isNAKAInAppBroswer() ? (
                 <div>
                   <p>
                     1.&nbsp;&nbsp;
