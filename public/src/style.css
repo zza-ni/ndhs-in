@@ -925,7 +925,7 @@ body.modal-open {
   pointer-events: none;
 }
 
-@media (max-width: 680px) {
+@media (max-width: 380px) {
   body {
     max-width: 100vw;
     margin: 0;
@@ -934,6 +934,26 @@ body.modal-open {
     margin-right: 12px;
     box-sizing: border-box;
     /* padding: 18px 12px; */
+  }
+
+  /* Board page 전용: 게시물만 화면 꽉 차게 */
+  .board-page.page-content {
+    max-width: none;
+    width: auto;
+    /* body의 좌우 마진(12px)을 상쇄해서 화면 끝까지 채움 */
+    margin-left: -12px;
+    margin-right: -12px;
+  }
+  .board-page.page-content .container {
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .board-page .board-post {
+    width: 100%;
+    border-radius: 0;
+  }
+  .board-page .board-accordion {
+    gap: 0;
   }
 
   .segmented-control {

@@ -83,9 +83,6 @@ export default function BoardPage() {
   const segControlRef = React.useRef(null);
   const liveRegionRef = React.useRef(null);
 
-  // 게시물별 댓글 상태 저장: { [postId]: { items?: any[], loading?: boolean, error?: string, tries?: number } }
-  const [commentsByPost, setCommentsByPost] = React.useState({});
-
   // derived post id from the URL we manage. prefer explicit pathname parsing
   const urlPostId = React.useMemo(() => {
     const m = (locationPath || window.location.pathname || "").match(
@@ -93,6 +90,34 @@ export default function BoardPage() {
     );
     return m ? m[2] : null;
   }, [locationPath]);
+
+  // 상단 고정 공지 ON/OFF 토글
+  const isPinned = false;
+
+  // 상단 고정 공지 (공지 탭 목록에서만 노출)
+  const pinnedNotice = React.useMemo(
+    () => ({
+      id: "pinned-notice-1",
+      pinned: true,
+      tag: "중요",
+      title: "남도인(ndhs.app) 안내",
+      content: "안녕하세요, 남도인 개발자입니다.",
+      created_at: "2025-09-17T09:00:00+09:00",
+    }),
+    []
+  );
+  const noticeDisplayItems = React.useMemo(
+    () =>
+      urlPostId
+        ? noticeItems
+        : isPinned
+        ? [pinnedNotice, ...(noticeItems || [])]
+        : noticeItems || [],
+    [pinnedNotice, noticeItems, urlPostId, isPinned]
+  );
+
+  // 게시물별 댓글 상태 저장: { [postId]: { items?: any[], loading?: boolean, error?: string, tries?: number } }
+  const [commentsByPost, setCommentsByPost] = React.useState({});
 
   // keep our local path in sync with browser history (back/forward)
   React.useEffect(() => {
@@ -249,6 +274,15 @@ export default function BoardPage() {
   // 추천(좋아요)
   async function likePost(postId) {
     const res = await fetchWithRetry(`${BOARD_API}/${postId}/like`, {
+      method: "POST",
+    });
+    if (!res.ok) throw new Error("like");
+    return res.json();
+  }
+
+  // 공지 추천
+  async function likeNotice(postId) {
+    const res = await fetchWithRetry(`${NOTICE_API}/${postId}/like`, {
       method: "POST",
     });
     if (!res.ok) throw new Error("like");
@@ -704,16 +738,52 @@ export default function BoardPage() {
   };
 
   const onLike = async (post) => {
+    const postId = post.id || post.post_id;
+    const isNoticeTab = activeTab === "notice";
     try {
-      setLikingId(post.id || post.post_id);
-      await likePost(post.id || post.post_id);
-      setItems((prev) =>
-        prev.map((p) =>
-          p === post || (p.id || p.post_id) === (post.id || post.post_id)
-            ? { ...p, likes: (p.likes || 0) + 1 }
-            : p
-        )
-      );
+      setLikingId(postId);
+      const result = isNoticeTab
+        ? await likeNotice(postId)
+        : await likePost(postId);
+      if (result && result.already_liked) {
+        toast?.show("이미 추천한 글이에요.", { type: "error" });
+        // mark as liked to prevent further clicks
+        if (isNoticeTab) {
+          setNoticeItems((prev) =>
+            (prev || []).map((p) =>
+              p === post || (p.id || p.post_id) === postId
+                ? { ...p, liked: true }
+                : p
+            )
+          );
+        } else {
+          setItems((prev) =>
+            (prev || []).map((p) =>
+              p === post || (p.id || p.post_id) === postId
+                ? { ...p, liked: true }
+                : p
+            )
+          );
+        }
+        return; // don't increment count
+      }
+      if (isNoticeTab) {
+        setNoticeItems((prev) =>
+          (prev || []).map((p) =>
+            p === post || (p.id || p.post_id) === postId
+              ? { ...p, likes: (p.likes || 0) + 1, liked: true }
+              : p
+          )
+        );
+      } else {
+        setItems((prev) =>
+          (prev || []).map((p) =>
+            p === post || (p.id || p.post_id) === postId
+              ? { ...p, likes: (p.likes || 0) + 1, liked: true }
+              : p
+          )
+        );
+      }
     } catch {
       toast?.show("추천에 실패했어요.", { type: "error" });
     } finally {
@@ -722,8 +792,12 @@ export default function BoardPage() {
   };
 
   return (
-    <main className="main-content page-content">
-      <PageHeader title={activeTab === "board" ? "칭찬합시다" : "공지사항"} />
+    <main
+      className={`main-content page-content board-page ${styles.boardPage}`}
+    >
+      <div className={styles.headerWrap}>
+        <PageHeader title={activeTab === "board" ? "칭찬합시다" : "공지사항"} />
+      </div>
       <div className="container" ref={scrollRef}>
         <div
           aria-live="polite"
@@ -885,8 +959,8 @@ export default function BoardPage() {
           (activeTab === "board"
             ? items.length > 0
             : noticeItems.length > 0) && (
-            <div className={acc.accordion}>
-              {(activeTab === "board" ? items : noticeItems)
+            <div className={`${acc.accordion} board-accordion`}>
+              {(activeTab === "board" ? items : noticeDisplayItems)
                 .filter((it) =>
                   activeTab === "notice"
                     ? selectedTag === "전체" ||
@@ -913,7 +987,7 @@ export default function BoardPage() {
                     <div
                       key={id}
                       id={`board-accordion-item-${id}`}
-                      className={`${acc.item} ${
+                      className={`${acc.item} board-post ${
                         urlPostId ? acc.open : isOpen ? acc.open : ""
                       }`}
                     >
@@ -964,7 +1038,7 @@ export default function BoardPage() {
                           className={acc.noticeContent}
                           onClick={onContentClick}
                         >
-                          {(urlPostId || isOpen) && (
+                          {(urlPostId || isOpen) && !it.pinned && (
                             <PermalinkBar
                               className={styles.permalink}
                               href={permalink}
@@ -978,6 +1052,27 @@ export default function BoardPage() {
                             <div dangerouslySetInnerHTML={{ __html: html }} />
                           )}
                         </div>
+                        {activeTab === "notice" && !it.pinned && (
+                          <div className={styles.boardActions}>
+                            <button
+                              className={form.btn}
+                              onClick={() => onLike(it)}
+                              aria-label="추천"
+                              aria-pressed={
+                                it.liked || likingId === (it.id || it.post_id)
+                              }
+                              disabled={
+                                isPending ||
+                                it.liked ||
+                                likingId === (it.id || it.post_id)
+                              }
+                              title="추천하기"
+                            >
+                              {likingId === (it.id || it.post_id) ? "…" : "👍"}{" "}
+                              {it.likes || 0}
+                            </button>
+                          </div>
+                        )}
                         {activeTab === "board" && (
                           <>
                             <div className={styles.boardActions}>
@@ -986,10 +1081,11 @@ export default function BoardPage() {
                                 onClick={() => onLike(it)}
                                 aria-label="추천"
                                 aria-pressed={
-                                  likingId === (it.id || it.post_id)
+                                  it.liked || likingId === (it.id || it.post_id)
                                 }
                                 disabled={
                                   isPending ||
+                                  it.liked ||
                                   likingId === (it.id || it.post_id)
                                 }
                                 title="추천하기"

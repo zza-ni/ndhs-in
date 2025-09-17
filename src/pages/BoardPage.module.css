@@ -1,6 +1,14 @@
 .segmentedWrap {
   padding: 10px 12px;
 }
+/* Page wrapper for BoardPage-only width adjustments */
+.boardPage {
+  padding: 0; /* placeholder to avoid empty ruleset */
+}
+.headerWrap {
+  /* default: no extra padding on desktop */
+  padding: 0;
+}
 .boardWrite {
   margin-bottom: 12px;
 }
@@ -107,7 +115,7 @@
   backdrop-filter: blur(4px);
 }
 .permalink a {
-  max-width: 60%;
+  max-width: 65%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -120,4 +128,31 @@
 }
 :global(:root[data-theme="dark"]) .permalink a {
   background: #666666;
+}
+
+@media (max-width: 380px) {
+  .headerWrap {
+    width: 100%;
+    max-width: 380px;
+    margin: 0 auto;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  /* BoardPage-only: make accordion items full-width */
+  .boardPage :global(.accordion) {
+    gap: 8px;
+  }
+  .boardPage :global(.item) {
+    width: 100%;
+    border-radius: 0;
+  }
+  .boardPage :global(.header) {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .boardPage :global(.panel) {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
 }
