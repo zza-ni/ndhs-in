@@ -1,5 +1,3 @@
-/* 세련된 칩(tag-chip) 스타일 개선 */
-
 /* 미니멀한 칩(tag-chip) 스타일 */
 .tag-chip {
   display: inline-block;
@@ -399,6 +397,7 @@ body {
   color: var(--main-font-color);
   font-weight: 600;
   min-width: 40px;
+  justify-content: center;
 }
 
 .chip-sm {
