@@ -12,15 +12,33 @@ const getUA = () => {
 
 const isiOS = () => /iphone|ipad|ipod/i.test(getUA());
 const isAndroid = () => /android/i.test(getUA());
-// Naver/Kakao in-app browser detector
-const isNAKAInAppBroswer = () => /(KAKAOTALK|NAVER)/i.test(getUA());
+// Broad in-app browser detector (social apps + Naver/Kakao)
+const isInAppBrowser = () => {
+  const ua = getUA().toLowerCase();
+  const patterns = [
+    "fban",
+    "fbav",
+    "fbios",
+    "fb_iab",
+    "fb4a",
+    "fblc",
+    "fbop",
+    "instagram",
+    "messengerforios",
+    "orca-android",
+    "youtube",
+    "kakaotalk",
+    "naver",
+  ];
+  return patterns.some((p) => ua.includes(p));
+};
 const isSafari = () => {
   const ua = getUA();
   return (
     isiOS() &&
     /Safari/i.test(ua) &&
     !/CriOS/i.test(ua) &&
-    !isNAKAInAppBroswer() &&
+    !isInAppBrowser() &&
     !/FBAV|Line/i.test(ua)
   );
 };
@@ -206,6 +224,41 @@ export default function PWAInstallPrompt() {
             document.removeEventListener("visibilitychange", onVisibility);
           } catch {}
           if (!leftPage) {
+            // iOS 16 이하에서 일부 인앱이 com-apple-mobilesafari-tab 스킴을 차단할 수 있어
+            // 링크 복사 안내 토스트를 함께 제공한다.
+            try {
+              const ua =
+                (typeof navigator !== "undefined" && navigator.userAgent) || "";
+              const m = ua.match(/OS (\d+)_/);
+              const iosMajor = m && m[1] ? parseInt(m[1], 10) || 0 : 0;
+              if (iosMajor && iosMajor <= 16) {
+                const url = window.location.href;
+                (async () => {
+                  try {
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                      await navigator.clipboard.writeText(url);
+                      toast?.show(
+                        "링크를 복사했어요. Safari에서 붙여넣기하여 열어주세요.",
+                        {
+                          type: "info",
+                          duration: 6000,
+                        }
+                      );
+                    } else {
+                      toast?.show("링크를 복사해 Safari에서 열어주세요.", {
+                        type: "error",
+                        duration: 6000,
+                      });
+                    }
+                  } catch {
+                    toast?.show("링크를 복사해 Safari에서 열어주세요.", {
+                      type: "error",
+                      duration: 6000,
+                    });
+                  }
+                })();
+              }
+            } catch {}
             setShowIOSModal(true);
           }
         }, 2500);
@@ -215,7 +268,7 @@ export default function PWAInstallPrompt() {
       return;
     }
     // Android Naver/Kakao in-app browsers: open externally via Chrome (fallback Samsung Internet)
-    if (isAndroid() && isNAKAInAppBroswer()) {
+    if (isAndroid() && isInAppBrowser()) {
       // Show a quick guidance toast, then attempt external open shortly after
       toast?.show("설치를 위해 크롬으로 이동합니다.", {
         type: "info",
@@ -390,7 +443,20 @@ export default function PWAInstallPrompt() {
     try {
       const href = window.location.href;
       const u = new URL(href);
-      const safariUrl = `x-safari-https://${u.host}${u.pathname}${u.search}${u.hash}`;
+      // Detect iOS major version
+      let iosMajor = 0;
+      try {
+        const m = (
+          (typeof navigator !== "undefined" && navigator.userAgent) ||
+          ""
+        ).match(/OS (\d+)_/);
+        if (m && m[1]) iosMajor = parseInt(m[1], 10) || 0;
+      } catch {}
+      const fullUrl = `${u.protocol}//${u.host}${u.pathname}${u.search}${u.hash}`;
+      const safariUrl =
+        iosMajor >= 17
+          ? `x-safari-${fullUrl}`
+          : `com-apple-mobilesafari-tab:${fullUrl}`;
       window.location.href = safariUrl;
     } catch (err) {
       // no-op
@@ -467,7 +533,7 @@ export default function PWAInstallPrompt() {
                   &nbsp; 버튼을 누르고{" "}
                   <b style={{ color: "blue" }}>홈 화면에 추가하기</b>
                 </p>
-              ) : isNAKAInAppBroswer() ? (
+              ) : isInAppBrowser() ? (
                 <div>
                   <p>
                     1.&nbsp;&nbsp;
