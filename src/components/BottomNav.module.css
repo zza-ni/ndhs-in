@@ -64,7 +64,8 @@
 
 @media (min-width: 768px) {
   .nav {
-    max-width: 380px;
+    max-width: 768px;
+    width: 100%;
     left: 50%;
     transform: translateX(-50%);
     border-radius: 20px 20px 0 0;

@@ -130,10 +130,10 @@
   background: #666666;
 }
 
-@media (max-width: 380px) {
+@media (max-width: 414px) {
   .headerWrap {
     width: 100%;
-    max-width: 380px;
+    max-width: 414px;
     margin: 0 auto;
     padding-left: 12px;
     padding-right: 12px;
