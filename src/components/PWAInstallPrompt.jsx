@@ -129,7 +129,7 @@ export default function PWAInstallPrompt() {
       if (snackTimerRef.current) clearTimeout(snackTimerRef.current);
       snackTimerRef.current = setTimeout(() => {
         if (!isSuppressedNow()) setShowSnack(true);
-      }, 3000);
+      }, 800);
     };
     const onInstalled = () => {
       setDeferred(null);
@@ -195,9 +195,11 @@ export default function PWAInstallPrompt() {
             passive: true,
           });
         } catch {}
-        try {
-          openInSafari();
-        } catch {}
+        setTimeout(() => {
+          try {
+            openInSafari();
+          } catch {}
+        }, 600);
         // If we didn't leave the page shortly, show the manual modal as fallback
         setTimeout(() => {
           try {
