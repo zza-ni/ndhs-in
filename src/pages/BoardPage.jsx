@@ -648,7 +648,10 @@ export default function BoardPage() {
     try {
       const created = await createPost({ title: title.trim(), content });
       // 승인제 적용: 관리자가 승인하면 목록에 노출됩니다.
-      toast?.show("관리자 승인 후 게시판에 노출됩니다.", { type: "info" });
+      toast?.show(
+        "글 작성이 완료되었어요.\n관리자 승인 후 게시판에 노출됩니다.",
+        { type: "success" }
+      );
       // 입력값 초기화 및 폼 닫기만 수행 (목록은 그대로 유지)
       setTitle("");
       setContent("");
@@ -690,7 +693,10 @@ export default function BoardPage() {
         )
       );
       // 승인제 안내: 관리자가 승인하면 댓글이 표시됩니다.
-      toast?.show("관리자 승인 후 댓글이 표시됩니다.", { type: "info" });
+      toast?.show(
+        "댓글 등록이 완료되었어요.\n관리자 승인 후 댓글이 표시됩니다.",
+        { type: "success" }
+      );
       return true;
     } catch {
       toast?.show("댓글 등록에 실패했어요.", { type: "error" });
