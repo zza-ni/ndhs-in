@@ -97,6 +97,7 @@ export function ToastProvider({ children }) {
                 pointerEvents: "none",
                 maxWidth: "min(92vw, 640px)",
                 textAlign: "center",
+                whiteSpace: "pre-line",
                 lineHeight: 1.3,
                 marginTop: idx === 0 ? 0 : 10,
                 marginBottom: 0,

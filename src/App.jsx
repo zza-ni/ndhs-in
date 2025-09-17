@@ -7,9 +7,10 @@ import {
   useLocation,
 } from "react-router-dom";
 import navStyles from "./components/BottomNav.module.css";
+import { useToast } from "./components/ui/Toast";
 import MenuPage from "./pages/MenuPage";
 import HomePage from "./pages/HomePage";
-import OvernightPage from "./pages/OvernightPage";
+// import OvernightPage from "./pages/OvernightPage";
 import BoardPage from "./pages/BoardPage";
 import SettingsPage from "./pages/SettingsPage";
 import AuthPage from "./pages/AuthPage";
@@ -38,6 +39,7 @@ function applyTheme(mode) {
 
 function BottomNav() {
   const location = useLocation();
+  const toast = useToast();
   const items = [
     {
       to: "/board",
@@ -64,8 +66,8 @@ function BottomNav() {
       ),
     },
     {
-      to: "/overnight",
-      label: "외박",
+      to: "/matching",
+      label: "매칭",
       icon: (
         <svg
           className="nav-icon"
@@ -73,21 +75,20 @@ function BottomNav() {
           fill="none"
           aria-hidden="true"
         >
-          <rect
-            x="3"
-            y="5"
-            width="18"
-            height="16"
-            rx="4"
+          <path
+            d="M18.5 19.5L20 21M4 21C4 17.134 7.13401 14 11 14M19 17.5C19 18.8807 17.8807 20 16.5 20C15.1193 20 14 18.8807 14 17.5C14 16.1193 15.1193 15 16.5 15C17.8807 15 19 16.1193 19 17.5ZM15 7C15 9.20914 13.2091 11 11 11C8.79086 11 7 9.20914 7 7C7 4.79086 8.79086 3 11 3C13.2091 3 15 4.79086 15 7Z"
             stroke="currentColor"
             strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           />
-          <path d="M8 2v4m8-4v4" stroke="currentColor" strokeWidth="2" />
-          <rect x="7" y="11" width="2" height="2" rx="1" fill="currentColor" />
-          <rect x="11" y="11" width="2" height="2" rx="1" fill="currentColor" />
-          <rect x="15" y="11" width="2" height="2" rx="1" fill="currentColor" />
         </svg>
       ),
+      onClick: () => {
+        toast.show("함께할 룸메이트를 매칭해드립니다.\n겨울에 만나요!", {
+          type: "info",
+        });
+      },
     },
     {
       to: "/",
@@ -198,7 +199,11 @@ function BottomNav() {
             className={({ isActive }) =>
               `${navStyles.item} ${isActive ? navStyles.active : ""}`
             }
-            onClick={() => {
+            onClick={(e) => {
+              if (it.onClick) {
+                e.preventDefault();
+                it.onClick();
+              }
               if ("vibrate" in navigator) navigator.vibrate(50);
             }}
             aria-label={it.label}
@@ -242,7 +247,7 @@ function AppShell() {
         <Route path="/menu" element={<MenuPage />} />
         <Route path="/notice" element={<BoardPage />} />
         <Route path="/notice/:postId" element={<BoardPage />} />
-        <Route path="/overnight" element={<OvernightPage />} />
+        {/* <Route path="/overnight" element={<OvernightPage />} /> */}
         <Route path="/board" element={<BoardPage />} />
         <Route path="/board/:postId" element={<BoardPage />} />
         <Route path="/settings" element={<SettingsPage />} />
