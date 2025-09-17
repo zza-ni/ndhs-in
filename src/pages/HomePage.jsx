@@ -66,13 +66,38 @@ const getTodayIndex = () => {
   let idx = now.getDay() - 1;
   return idx < 0 ? 6 : idx;
 };
-const formatNoticeDate = (yyyymmddHHMMSS) => {
-  if (!yyyymmddHHMMSS) return "";
-  const s = String(yyyymmddHHMMSS);
-  const yy = s.slice(2, 4);
-  const m = String(parseInt(s.slice(4, 6), 10));
-  const d = String(parseInt(s.slice(6, 8), 10));
-  return `${yy}/${m}/${d}`;
+const formatNoticeDate = (input) => {
+  if (!input) return "";
+  const s = String(input).trim();
+
+  // Case 1: Numeric yyyymmddHHMMSS (or longer) as originally handled
+  if (/^\d{8,}$/.test(s)) {
+    const yy = s.slice(2, 4);
+    const m = String(parseInt(s.slice(4, 6), 10));
+    const d = String(parseInt(s.slice(6, 8), 10));
+    return `${yy}/${m}/${d}`;
+  }
+
+  // Case 2: ISO-like string (e.g., 1999-12-08T10:04:00+09:00)
+  const dObj = new Date(s);
+  if (!isNaN(dObj.getTime())) {
+    const ymd = dObj
+      .toLocaleDateString("en-CA", { timeZone: tz }) // YYYY-MM-DD in Asia/Seoul
+      .split("-");
+    if (ymd.length === 3) {
+      const [y, mm, dd] = ymd;
+      return `${y.slice(2)}/${parseInt(mm, 10)}/${parseInt(dd, 10)}`;
+    }
+  }
+
+  // Case 3: Fallback for plain YYYY-MM-DD (without time)
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) {
+    const [, y, mm, dd] = m;
+    return `${y.slice(2)}/${parseInt(mm, 10)}/${parseInt(dd, 10)}`;
+  }
+
+  return "";
 };
 
 export default function HomePage() {
