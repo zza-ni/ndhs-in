@@ -13,6 +13,10 @@ export default function AdminPushTest() {
   const [sending, setSending] = React.useState(false);
   const [result, setResult] = React.useState("");
   const [type, setType] = React.useState("all"); // all | fcm (둘 다 FCM 경로)
+  // Optional fields
+  const [url, setUrl] = React.useState("");
+  const [icon, setIcon] = React.useState("");
+  const [badge, setBadge] = React.useState("");
 
   const onSend = async () => {
     if (sending) return;
@@ -20,7 +24,21 @@ export default function AdminPushTest() {
     setResult("");
     try {
       const path = type === "all" ? "/api/sendAllPush" : "/api/sendPush";
-      const payload = { password, title, body };
+      // Build payload per API
+      let payload = { password, title, body };
+      if (type === "all") {
+        // sendAllPush accepts top-level url/icon/badge
+        if (url) payload.url = url;
+        if (icon) payload.icon = icon;
+        if (badge) payload.badge = badge;
+      } else {
+        // sendPush expects them inside data
+        const data = {};
+        if (url) data.url = url;
+        if (icon) data.icon = icon;
+        if (badge) data.badge = badge;
+        if (Object.keys(data).length) payload.data = data;
+      }
       const res = await fetchWithRetry(path, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -166,6 +184,34 @@ export default function AdminPushTest() {
                   onChange={(e) => setBody(e.target.value)}
                   placeholder="알림 본문"
                 />
+              </label>
+              <Divider />
+              <label>
+                <span className="muted">URL (선택)</span>
+                <input
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  placeholder="예: /notice 또는 https://ndhs.app/notice"
+                />
+                <Hint>미입력 시 서버에서 기본값으로 대체됩니다.</Hint>
+              </label>
+              <label>
+                <span className="muted">아이콘 URL (선택)</span>
+                <input
+                  value={icon}
+                  onChange={(e) => setIcon(e.target.value)}
+                  placeholder="예: /src/icon-192x192.png"
+                />
+                <Hint>미입력 시 앱 기본 아이콘이 사용됩니다.</Hint>
+              </label>
+              <label>
+                <span className="muted">배지 URL (선택)</span>
+                <input
+                  value={badge}
+                  onChange={(e) => setBadge(e.target.value)}
+                  placeholder="예: /src/icon-192x192.png"
+                />
+                <Hint>미입력 시 앱 기본 배지가 사용됩니다.</Hint>
               </label>
             </div>
 
