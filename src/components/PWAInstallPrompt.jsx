@@ -128,14 +128,14 @@ export default function PWAInstallPrompt() {
       if (snackTimerRef.current) clearTimeout(snackTimerRef.current);
       snackTimerRef.current = setTimeout(() => {
         if (!isSuppressedNow()) setShowSnack(true);
-      }, 3000);
+      }, 800);
     }
     // Android fallback: show snackbar after a delay if event hasn't fired yet
     if (!isiOS()) {
       if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
       fallbackTimerRef.current = setTimeout(() => {
         if (!deferred && !isSuppressedNow()) setShowSnack(true);
-      }, 3000);
+      }, 800);
     }
 
     const onBefore = (e) => {
