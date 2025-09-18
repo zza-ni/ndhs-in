@@ -70,34 +70,9 @@ export default function PWAInstallPrompt() {
   const snackTimerRef = React.useRef(null);
   const installingRef = React.useRef(false);
   const fallbackTimerRef = React.useRef(null);
+  // Suppression disabled: always allow snackbar to show on page load/refresh
   const HIDE_KEY = "pwa-snackbar-hide-until";
-
-  const getHideUntil = React.useCallback(() => {
-    try {
-      if (typeof window === "undefined") return 0;
-      const raw = window.localStorage.getItem(HIDE_KEY);
-      const ts = raw ? parseInt(raw, 10) : 0;
-      return Number.isFinite(ts) ? ts : 0;
-    } catch {
-      return 0;
-    }
-  }, []);
-
-  const isSuppressedNow = React.useCallback(() => {
-    try {
-      return Date.now() < getHideUntil();
-    } catch {
-      return false;
-    }
-  }, [getHideUntil]);
-
-  const suppressForHours = (hours) => {
-    try {
-      if (typeof window === "undefined") return;
-      const until = Date.now() + hours * 60 * 60 * 1000;
-      window.localStorage.setItem(HIDE_KEY, String(until));
-    } catch {}
-  };
+  const isSuppressedNow = React.useCallback(() => false, []);
 
   const isInstalled = React.useMemo(() => {
     try {
@@ -378,8 +353,12 @@ export default function PWAInstallPrompt() {
       e && e.stopPropagation && e.stopPropagation();
     } catch {}
     setShowSnack(false);
-    // Remember dismissal for 12 hours
-    suppressForHours(12);
+    // Do not persist suppression; ensure it can reappear on refresh
+    try {
+      if (typeof window !== "undefined") {
+        window.localStorage.removeItem(HIDE_KEY);
+      }
+    } catch {}
     // Clear any pending timers that might reshow it quickly on this session
     if (snackTimerRef.current) {
       clearTimeout(snackTimerRef.current);

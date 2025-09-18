@@ -516,9 +516,8 @@ body.modal-open .page-content .container {
   min-width: 320px;
   max-width: 90vw;
   /* background: var(--focus-color); */
-  background: #ff424e;
-  /* #054a2d */
-  color: var(--white);
+  background-image: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);
+  color: var(--black);
   border-radius: 16px;
   box-shadow: 0 4px 18px var(--shadow-deep);
   z-index: 1000;
