@@ -1,6 +1,10 @@
 // Firebase Messaging (background notifications)
-importScripts('https://www.gstatic.com/firebasejs/12.1.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/12.1.0/firebase-messaging-compat.js');
+importScripts(
+  "https://www.gstatic.com/firebasejs/12.1.0/firebase-app-compat.js"
+);
+importScripts(
+  "https://www.gstatic.com/firebasejs/12.1.0/firebase-messaging-compat.js"
+);
 
 try {
   const firebaseConfig = {
@@ -10,7 +14,7 @@ try {
     storageBucket: "ndhs-bob.firebasestorage.app",
     messagingSenderId: "109335510565",
     appId: "1:109335510565:web:8777eb5e791089da23c9cc",
-    measurementId: "G-32BMZXN9CQ"
+    measurementId: "G-32BMZXN9CQ",
   };
   // Guard multiple init across updates
   if (!self.firebase?.apps?.length) {
@@ -21,92 +25,100 @@ try {
   messaging.onBackgroundMessage((payload) => {
     if (!payload || payload.notification) return; // notification payload는 수동 표시 안 함
     const d = payload.data || {};
-    const title = d.title || '';
-    const body = d.body || '';
+    const title = d.title || "";
+    const body = d.body || "";
     if (!title && !body) return;
     const options = {
       body,
-      icon: d.icon || '/src/icon-192x192.png',
-      badge: d.badge || '/src/icon-192x192.png',
-      tag: d.tag || 'ndhs-bob-global',
-      renotify: d.renotify === 'true' ? true : false,
-      data: { url: d.url || '/' },
+      icon: d.icon || "/src/icon-192x192.png",
+      badge: d.badge || "/src/icon-192x192.png",
+      tag: d.tag || "ndhs-bob-global",
+      renotify: d.renotify === "true" ? true : false,
+      data: { url: d.url || "/" },
     };
     // 강력 중복 방지: 같은 태그/내용의 알림이 이미 표시 중이면 스킵, 또는 최근 2초 내 동일 메시지 스킵
     const now = Date.now();
     const id = `${title}\n${body}\n${options.data.url}`;
-    self.__lastNoti = self.__lastNoti || { id: '', ts: 0 };
+    self.__lastNoti = self.__lastNoti || { id: "", ts: 0 };
     if (self.__lastNoti.id === id && now - self.__lastNoti.ts < 2000) return;
     (async () => {
       try {
-        const existing = await self.registration.getNotifications({ tag: options.tag });
+        const existing = await self.registration.getNotifications({
+          tag: options.tag,
+        });
         if (existing && existing.length > 0) return; // 이미 같은 태그 표시 중이면 스킵
       } catch {}
       self.__lastNoti = { id, ts: now };
-      await self.registration.showNotification(title || '알림', options);
+      await self.registration.showNotification(title || "알림", options);
     })();
   });
 } catch (e) {
   // ignore messaging setup failures in SW
 }
 
-const CACHE_NAME = 'ndhs-bob-cache-v3';
+const CACHE_NAME = "ndhs-bob-cache-v3";
 const CORE_ASSETS = [
-  '/',
-  '/index.html',
-  '/src/style.css',
-  '/src/main.jsx',
-  '/src/icon-192x192.png',
-  '/src/icon-512x512.png',
+  "/",
+  "/index.html",
+  "/src/style.css",
+  "/src/main.jsx",
+  "/src/icon-192x192.png",
+  "/src/icon-512x512.png",
 ];
 
-self.addEventListener('install', (event) => {
+self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
+    caches
+      .open(CACHE_NAME)
       .then((cache) => cache.addAll(CORE_ASSETS))
-  .then(() => self.skipWaiting())
+      .then(() => self.skipWaiting())
   );
 });
 
-self.addEventListener('activate', (event) => {
+self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((names) =>
-      Promise.all(
-        names.map((name) => {
-          if (name !== CACHE_NAME) {
-            return caches.delete(name);
-          }
-        })
+    caches
+      .keys()
+      .then((names) =>
+        Promise.all(
+          names.map((name) => {
+            if (name !== CACHE_NAME) {
+              return caches.delete(name);
+            }
+          })
+        )
       )
-    ).then(() => self.clients.claim())
+      .then(() => self.clients.claim())
   );
 });
 
 // Allow clients to trigger immediate activation
-self.addEventListener('message', (event) => {
-  if (event?.data === 'SKIP_WAITING' || event?.data?.type === 'SKIP_WAITING') {
+self.addEventListener("message", (event) => {
+  if (event?.data === "SKIP_WAITING" || event?.data?.type === "SKIP_WAITING") {
     self.skipWaiting();
   }
 });
 
-self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
+self.addEventListener("fetch", (event) => {
+  if (event.request.method !== "GET") return;
   const url = new URL(event.request.url);
 
   // 1) api.ndhs.app → 항상 네트워크 (캐시 저장/사용 X)
-  if (url.hostname === 'api.ndhs.app') {
+  if (url.hostname === "api.ndhs.app") {
     event.respondWith(fetch(event.request));
     return;
   }
 
   // 2) cdn.ndhs.app 또는 /data → 캐시 우선 (없으면 네트워크 후 캐시에 저장)
-  if (url.hostname === 'cdn.ndhs.app' || url.pathname.startsWith('/data/')) {
+  if (url.hostname === "cdn.ndhs.app" || url.pathname.startsWith("/data/")) {
     event.respondWith(
       caches.match(event.request).then((cached) => {
         if (cached) return cached;
         return fetch(event.request).then((resp) => {
           const copy = resp.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          caches
+            .open(CACHE_NAME)
+            .then((cache) => cache.put(event.request, copy));
           return resp;
         });
       })
@@ -118,21 +130,39 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(fetch(event.request));
 });
 
-
-self.addEventListener('notificationclick', (event) => {
+self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const targetUrl = (event.notification && event.notification.data && event.notification.data.url) || '/';
+  const raw =
+    (event.notification &&
+      event.notification.data &&
+      event.notification.data.url) ||
+    "/";
+  const targetUrl = new URL(raw, self.location.origin).toString();
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      for (const client of clientList) {
-        if ('focus' in client) {
-          client.postMessage && client.postMessage({ type: 'OPEN_URL', url: targetUrl });
-          return client.focus();
+    (async () => {
+      try {
+        const clientList = await clients.matchAll({
+          type: "window",
+          includeUncontrolled: true,
+        });
+        if (clientList && clientList.length) {
+          // Prefer navigating an existing client for reliability
+          const client = clientList[0];
+          try {
+            if (client.navigate) {
+              await client.navigate(targetUrl);
+            } else if (client.postMessage) {
+              client.postMessage({ type: "OPEN_URL", url: targetUrl });
+            }
+          } catch {}
+          return client.focus && client.focus();
         }
-      }
+      } catch {}
+      // No clients found → open new window
       if (clients.openWindow) {
         return clients.openWindow(targetUrl);
       }
-    })
+      return undefined;
+    })()
   );
 });
