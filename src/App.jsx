@@ -14,6 +14,7 @@ import HomePage from "./pages/HomePage";
 import BoardPage from "./pages/BoardPage";
 import SettingsPage from "./pages/SettingsPage";
 import AuthPage from "./pages/AuthPage";
+import InstallGuidePage from "./pages/InstallGuidePage";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import PushPermissionPrompt from "./components/PushPermissionPrompt";
 import AdminPushTest from "./pages/AdminPushTest";
@@ -254,6 +255,7 @@ function AppShell() {
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/admin/push" element={<AdminPushTest />} />
         <Route path="/admin/board" element={<AdminBoard />} />
+        <Route path="/install-guide" element={<InstallGuidePage />} />
         <Route
           path="*"
           element={<SimplePage title="페이지를 찾을 수 없습니다" />}

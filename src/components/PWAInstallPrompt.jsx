@@ -397,7 +397,7 @@ export default function PWAInstallPrompt() {
       const href = window.location.href;
       const u = new URL(href);
       const scheme = (u.protocol || "https:").replace(":", "");
-      const base = `${u.host}${u.pathname}${u.search}${u.hash}`;
+      const base = `${u.host}/install-guide`;
 
       const chromeIntent = `intent://${base}#Intent;scheme=${scheme};package=com.android.chrome;end`;
       const samsungIntent = `intent://${base}#Intent;scheme=${scheme};package=com.sec.android.app.sbrowser;end`;
@@ -452,7 +452,7 @@ export default function PWAInstallPrompt() {
         ).match(/OS (\d+)_/);
         if (m && m[1]) iosMajor = parseInt(m[1], 10) || 0;
       } catch {}
-      const fullUrl = `${u.protocol}//${u.host}${u.pathname}${u.search}${u.hash}`;
+      const fullUrl = `${u.protocol}//${u.host}/install-guide`;
       const safariUrl =
         iosMajor >= 17
           ? `x-safari-${fullUrl}`
