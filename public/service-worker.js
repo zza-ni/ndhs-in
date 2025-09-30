@@ -56,7 +56,8 @@ try {
   // ignore messaging setup failures in SW
 }
 
-const CACHE_NAME = "ndhs-bob-cache-v3";
+// Bump cache to clear any previously cached /data/* entries
+const CACHE_NAME = "ndhs-bob-cache-v4";
 const CORE_ASSETS = [
   "/",
   "/index.html",
@@ -109,16 +110,65 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // 2) cdn.ndhs.app 또는 /data → 캐시 우선 (없으면 네트워크 후 캐시에 저장)
-  if (url.hostname === "cdn.ndhs.app" || url.pathname.startsWith("/data/")) {
+  // 2) /data → 네트워크 우선 (최신 데이터 보장), 실패 시 캐시 백업
+  if (url.pathname.startsWith("/data/")) {
+    event.respondWith(
+      (async () => {
+        try {
+          // Bypass HTTP cache to always fetch fresh JSON
+          let fetchTarget = event.request;
+          let cacheKeyRequest = event.request;
+          if (url.pathname === "/data/20251001.json") {
+            const busted = new URL(url.toString());
+            busted.searchParams.set("v", "2");
+            fetchTarget = busted.toString();
+            cacheKeyRequest = new Request(busted.toString());
+          }
+          const networkResp = await fetch(fetchTarget, { cache: "no-store" });
+          try {
+            // .json 경로일 경우, 응답의 Content-Type이 application/json일 때만 캐시 저장
+            const isJsonPath = url.pathname.includes(".json");
+            const ct =
+              (networkResp.headers &&
+                networkResp.headers.get("content-type")) ||
+              "";
+            if (!isJsonPath || /application\/json/i.test(ct)) {
+              const copy = networkResp.clone();
+              caches
+                .open(CACHE_NAME)
+                .then((cache) => cache.put(cacheKeyRequest, copy));
+            }
+          } catch {}
+          return networkResp;
+        } catch {
+          // Offline or failed → serve last cached version if present
+          const cached = await caches.match(cacheKeyRequest);
+          if (cached) return cached;
+          // As a last resort, let it fail
+          return fetch(fetchTarget);
+        }
+      })()
+    );
+    return;
+  }
+
+  // 3) cdn.ndhs.app → 캐시 우선 (없으면 네트워크 후 캐시에 저장)
+  if (url.hostname === "cdn.ndhs.app") {
     event.respondWith(
       caches.match(event.request).then((cached) => {
         if (cached) return cached;
         return fetch(event.request).then((resp) => {
-          const copy = resp.clone();
-          caches
-            .open(CACHE_NAME)
-            .then((cache) => cache.put(event.request, copy));
+          try {
+            // .json 경로 캐시 시 Content-Type 확인
+            const isJsonPath = url.pathname.includes(".json");
+            const ct = (resp.headers && resp.headers.get("content-type")) || "";
+            if (!isJsonPath || /application\/json/i.test(ct)) {
+              const copy = resp.clone();
+              caches
+                .open(CACHE_NAME)
+                .then((cache) => cache.put(event.request, copy));
+            }
+          } catch {}
           return resp;
         });
       })
@@ -126,7 +176,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // 3) 그 외 → 캐시 미사용 (항상 네트워크)
+  // 4) 그 외 → 캐시 미사용 (항상 네트워크)
   event.respondWith(fetch(event.request));
 });
 
