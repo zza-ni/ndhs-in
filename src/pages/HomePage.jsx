@@ -167,7 +167,13 @@ export default function HomePage() {
           : "";
         setMenuOfToday({ mealLabel, items, dateLabel });
       } catch (e) {
-        setMenuError("메뉴를 불러오지 못했어요.");
+        // 2월은 학사 미운영 기간
+        const month = parseInt(active.date.slice(4, 6), 10);
+        if (month === 2) {
+          setMenuError("학사 미운영 기간(2월)이에요.");
+        } else {
+          setMenuError("메뉴를 불러오지 못했어요.");
+        }
       } finally {
         setMenuLoading(false);
       }
