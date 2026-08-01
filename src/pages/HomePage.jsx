@@ -19,6 +19,14 @@ import {
 import styles from "./HomePage.module.css";
 import { fetchWithRetry } from "../lib/api";
 
+const DRYER_GRID_POSITION = {
+  1: { row: 2, col: 1 },
+  2: { row: 2, col: 2 },
+  3: { row: 2, col: 3 },
+  4: { row: 1, col: 1 },
+  5: { row: 1, col: 2 },
+};
+
 const days = ["월", "화", "수", "목", "금", "토", "일"];
 const tz = "Asia/Seoul";
 const now = new Date();
@@ -450,11 +458,23 @@ export default function HomePage() {
                       d.equipmentName || `건조기 ${idx + 1}`
                     ).replace(/\s*\(.*\)\s*/, "");
                     const equipNumber = parseInt(name.match(/\d+/));
-                    const statusColor = inUse || usable ? "#4caf50" : "#bdbdbd";
+                    const equipNumberStr = String(equipNumber);
+                    const equipNumberLine1 = equipNumberStr.slice(-2);
+                    const equipNumberLine2 = equipNumberStr.slice(0, -2);
+                    const statusColor = inUse ? "#3ddc84" : usable ? "#8bc9ff" : "var(--date-font-color)";
+                    const statusKey = inUse ? "use" : usable ? "usable" : "idle";
+                    const statusLabel = inUse ? "사용중" : usable ? "대기" : "정지";
+                    const gridPos = DRYER_GRID_POSITION[equipNumber];
                     return (
                       <div
                         key={d.equipmentSeq || idx}
-                        className="equipment-item"
+                        className={styles.equipItem}
+                        data-status={statusKey}
+                        style={
+                          gridPos
+                            ? { gridRow: gridPos.row, gridColumn: gridPos.col }
+                            : undefined
+                        }
                       >
                         <div
                           className={styles.equipmentSvg}
@@ -463,6 +483,7 @@ export default function HomePage() {
                             remaining
                           )}`}
                         >
+                          {inUse && <span className={styles.liveDot} />}
                           <svg
                             width={size}
                             height={size}
@@ -472,7 +493,7 @@ export default function HomePage() {
                               cx={size / 2}
                               cy={size / 2}
                               r={r}
-                              stroke="#e0e0e0"
+                              stroke="var(--disable-color)"
                               strokeWidth={stroke}
                               fill="none"
                             />
@@ -487,12 +508,22 @@ export default function HomePage() {
                               strokeDashoffset={`${c - dash}`}
                               strokeLinecap="round"
                               transform={`rotate(-90 ${size / 2} ${size / 2})`}
+                              className={styles.progressArc}
                             />
                           </svg>
-                          <div className="equipment-number">{equipNumber}</div>
+                          <div className={styles.equipmentNumber}>
+                            {equipNumberLine2 ? (
+                              <>
+                                <span>{equipNumberLine1}</span>
+                                <span>{equipNumberLine2}</span>
+                              </>
+                            ) : (
+                              equipNumberStr
+                            )}
+                          </div>
                         </div>
                         <div className={styles.equipmentTime}>
-                          {secToMMSS(remaining)}
+                          {inUse ? secToMMSS(remaining) : statusLabel}
                         </div>
                       </div>
                     );

@@ -6,3 +6,4 @@
 /example
 /dist
 .env.development
+/.claude
